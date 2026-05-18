@@ -1,0 +1,23 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+
+# Sensitive
+*.tfvars
+!*.tfvars.example
+.envrc
+
+# Lambda build artifacts
+**/build/
+*.zip
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store

@@ -1,0 +1,44 @@
+resource "aws_s3_bucket" "claims" {
+  bucket = "${var.project}-${var.environment}-claims-${var.suffix}"
+  tags   = var.tags
+}
+
+resource "aws_s3_bucket_versioning" "claims" {
+  bucket = aws_s3_bucket.claims.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "claims" {
+  bucket = aws_s3_bucket.claims.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "claims" {
+  bucket                  = aws_s3_bucket.claims.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Lifecycle: alte Versionen nach 90 Tagen entfernen (Kostenkontrolle, didaktisch interessant)
+resource "aws_s3_bucket_lifecycle_configuration" "claims" {
+  bucket = aws_s3_bucket.claims.id
+
+  rule {
+    id     = "expire-old-versions"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = 90
+    }
+  }
+}

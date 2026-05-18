@@ -1,0 +1,9 @@
+# Kopiere diese Datei nach terraform.tfvars und passe die Werte an.
+# terraform.tfvars NICHT ins Git einchecken (siehe .gitignore)!
+
+region      = "eu-central-1"
+project     = "devk"
+environment = "dev"
+
+db_username = "claims_admin"
+db_password = "BitteHierEinStarkesPasswortSetzen!"
