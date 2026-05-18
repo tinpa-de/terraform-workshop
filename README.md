@@ -1,6 +1,6 @@
 # Terraform Workshop
 
-Welcome! This workshop is designed for absolute beginners. You don't need any prior experience with AWS or Terraform — everything you need will be explained along the way.
+Welcome to this terraform workshop!
 
 By the end you will have:
 - Deployed a public static website to AWS using Terraform
@@ -188,15 +188,16 @@ Because you share the S3 bucket with other workshop participants, each person cr
 1. Open `terraform/initialize-lock-db/default.auto.tfvars` in your text editor.
 2. Replace `-NAME` with your first name or initials. Use **lowercase letters and hyphens only** — no spaces or special characters.
    ```
-   dynamodb_table_name = "terraform-state-lock-tino"
+   dynamodb_table_name = "terraform-state-lock-NAME"
    ```
 3. Navigate to the `initialize-lock-db` directory in your terminal:
    ```bash
    cd terraform/initialize-lock-db
    ```
-4. Run the two commands below. The first downloads the required provider plugins; the second creates your DynamoDB table.
+4. Run the commands below. The first downloads the required provider plugins; the second creates your DynamoDB table.
    ```bash
    tf init
+   tf plan
    tf apply
    ```
 5. Terraform will print a summary of what it plans to create and then ask: `Do you want to perform these actions?` — type `yes` and press Enter.
@@ -207,7 +208,7 @@ You should see: `Apply complete! Resources: 1 added, 0 changed, 0 destroyed.`
 
 ### Step 5 – Configure your personal backend
 
-Now you need to tell Terraform *where* to store your state file. Everyone stores their state in the same shared S3 bucket, but each person uses a unique `key` — think of it as the file path inside the bucket — so your state doesn't overwrite anyone else's.
+Now you need to tell the main Terraform project *where* to store your state file. Everyone stores their state in the same shared S3 bucket, but each person uses a unique `key` — think of it as the file path inside the bucket — so your state doesn't overwrite anyone else's.
 
 1. Open `terraform/main.tf` in your editor.
 2. Find the `backend "s3"` block near the top of the file, inside the `terraform {}` block:
@@ -219,11 +220,11 @@ Now you need to tell Terraform *where* to store your state file. Everyone stores
    ```
 3. Replace `NAME` in the `key` value with your name — use the same value you used in Step 4.
    ```hcl
-   key = "infrastructure-tino"
+   key = "infrastructure-NAME"
    ```
 4. While you have this file open, also add your DynamoDB table name so that state locking is active:
    ```hcl
-   dynamodb_table = "terraform-state-lock-tino"   # same name as Step 4
+   dynamodb_table = "terraform-state-lock-NAME"   # same name as Step 4
    ```
 5. Navigate to the `terraform/` directory:
    ```bash
@@ -254,12 +255,12 @@ resource "TYPE" "LOCAL_NAME" {
 
 - `TYPE` is the resource type defined by the provider, for example `aws_s3_bucket`.
 - `LOCAL_NAME` is a name you choose — it's only used inside your Terraform code to reference this specific resource from elsewhere.
-- The arguments inside the block configure the resource. What arguments exist and which are required is documented in the [Terraform Registry](https://registry.terraform.io/).
+- The arguments inside the block configure the resource. What arguments exist and which are required is documented in the [Terraform Registry](https://registry.terraform.io/providers/hashicorp/aws/latest/docs).
 
 **Referencing another resource** lets you use its attributes without copying values manually. For example:
 
 ```hcl
-bucket = aws_s3_bucket.my_bucket.id
+bucket_id = aws_s3_bucket.my_bucket.id
 ```
 
 This reads the `id` attribute of the resource of type `aws_s3_bucket` that you named `my_bucket`. Terraform automatically figures out the correct order to create the two resources.
@@ -277,7 +278,6 @@ Never skip `tf plan`. It shows exactly what will happen before anything is chang
 The `terraform/main.tf` file already configures two AWS providers for you:
 
 - `aws.frankfurt` — used for most resources (region: `eu-central-1`)
-- `aws.virginia` — used for CloudFront (region: `us-east-1`, bonus only)
 
 To assign a specific provider to a resource, add this argument inside its block:
 
@@ -291,7 +291,7 @@ Use `aws.frankfurt` for every resource you create in Task 1.
 
 ### 1.1 – Create an S3 bucket
 
-**Goal:** Create a new file called `terraform/s3.tf` and declare an `aws_s3_bucket` resource inside it. The bucket name must be **globally unique across all of AWS** — prefix it with your name, for example `tino-workshop-static-page`. Include `provider = aws.frankfurt`.
+**Goal:** Create a new file called `terraform/s3.tf` and declare an `aws_s3_bucket` resource inside it. The bucket name must be **globally unique across all of AWS** — prefix it with your name, for example `justus-workshop-static-page`.
 
 Run `tf plan` and read the output to understand what Terraform is going to do, then run `tf apply`.
 
@@ -304,7 +304,7 @@ Run `tf plan` and read the output to understand what Terraform is going to do, t
 
 The `aws_s3_bucket` resource only needs a `bucket` argument (the name) and the `provider` argument at this stage. Keep it minimal — you will configure the bucket's behaviour through separate, dedicated resources in the following steps. That's the Terraform approach: one resource, one concern.
 
-S3 bucket names must be globally unique across all AWS accounts worldwide. Including your name, company, and today's date (e.g. `tino-nl-20250517`) is a reliable way to avoid conflicts with other people's buckets.
+S3 bucket names must be globally unique across all AWS accounts worldwide. Including your name, company, and today's date (e.g. `justus-nl-20250517`) is a reliable way to avoid conflicts with other people's buckets.
 
 </details>
 
@@ -418,8 +418,6 @@ This is a larger task. It involves:
 - An `aws_cloudfront_distribution` resource configured with your S3 bucket as the origin
 - Updating your bucket policy so that only CloudFront can access the bucket, instead of the public internet directly
 
-> CloudFront resources must always be created in `us-east-1` (Northern Virginia), regardless of where your S3 bucket is. Use `provider = aws.virginia` for CloudFront resources — this provider is already configured in `main.tf`.
-
 **Terraform documentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution
 
 ---
@@ -455,7 +453,7 @@ No Terraform commands are needed yet — these are just empty files to establish
 
 Once the resources are moved you can delete `terraform/s3.tf`.
 
-> **Providers inside modules — important:** The root `main.tf` uses *aliased* providers (`aws.frankfurt`, `aws.virginia`). A child module must explicitly declare which provider aliases it expects. Add the following block at the top of `terraform/modules/static-webpage/main.tf`:
+> **Providers inside modules — important:** The root `main.tf` uses *aliased* providers (`aws.frankfurt`). A child module must explicitly declare which provider aliases it expects. Add the following block at the top of `terraform/modules/static-webpage/main.tf`:
 >
 > ```hcl
 > terraform {
@@ -528,7 +526,7 @@ module "static_page_1" {
     aws.frankfurt = aws.frankfurt
   }
 
-  name     = "tino-static-page-1"
+  name     = "justus-static-page-1"
   filepath = "../resources/static-page/index.html"
 }
 ```
