@@ -12,9 +12,7 @@ provider "aws" {
   region = "eu-west-1"
 }
 
-resource "aws_s3_bucket" "backend_bucket" {
-  bucket = "terraform-state-nl-devk"
-}
+
 
 resource "aws_dynamodb_table" "backend_lock_table" {
   name = var.dynamodb_table_name
