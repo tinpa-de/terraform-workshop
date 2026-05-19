@@ -9,19 +9,13 @@ variable "environment" {
 }
 
 variable "vpc_id" {
-  description = "VPC, in der die RDS-Instanz läuft"
+  description = "VPC für die Security Group der RDS-Instanz"
   type        = string
 }
 
 variable "subnet_ids" {
   description = "Subnets für die DB Subnet Group (mindestens 2 in unterschiedlichen AZs)"
   type        = list(string)
-}
-
-variable "allowed_security_group_ids" {
-  description = "Security Groups, die per Ingress auf RDS zugreifen dürfen"
-  type        = list(string)
-  default     = []
 }
 
 variable "db_name" {

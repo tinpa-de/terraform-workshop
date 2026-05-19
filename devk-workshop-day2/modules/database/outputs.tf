@@ -13,10 +13,6 @@ output "port" {
   value       = aws_db_instance.claims.port
 }
 
-output "security_group_id" {
-  description = "Security Group ID der RDS-Instanz"
-  value       = aws_security_group.rds.id
-}
 
 output "db_name" {
   description = "Name der Datenbank"

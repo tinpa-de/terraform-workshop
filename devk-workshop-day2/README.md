@@ -49,14 +49,13 @@ terraform version   # sollte >= 1.6 sein
 # 2. AWS-Credentials
 aws sts get-caller-identity   # muss eine Account-ID zurückgeben
 
-# 3. Default-VPC (wird von diesem Setup benötigt)
+# 3. Region prüfen
+aws configure get region   # sollte eu-central-1 sein
+
+# 4. Default-VPC (RDS braucht eine Subnet Group)
 aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
   --query 'Vpcs[0].VpcId' --output text
-# Wenn "None" zurückkommt:
-# aws ec2 create-default-vpc
-
-# 4. Region prüfen
-aws configure get region   # sollte eu-central-1 sein
+# Wenn "None" zurückkommt: aws ec2 create-default-vpc
 ```
 
 > ⚠️ **Wichtig:** Am Ende des Workshops bitte `terraform destroy` ausführen –
@@ -286,6 +285,8 @@ man es produktionsreif machen würde. Leitfaden: `docs/best-practices.md`
 
 | Workshop-Vereinfachung | Produktion |
 |------------------------|-----------|
+| `publicly_accessible = true` (RDS) | `false` + Lambda in VPC + private Subnets + NAT |
+| RDS Security Group offen (0.0.0.0/0) | Security Group Referenzen auf Lambda-SGs |
 | `db_password` in tfvars | AWS Secrets Manager + `random_password` |
 | `skip_final_snapshot = true` | `false` + Snapshot-Name pflegen |
 | Lambda-Code im selben Repo | Eigene Pipeline + S3-Versionierung |

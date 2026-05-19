@@ -1,16 +1,6 @@
 variable "project"     { type = string }
 variable "environment" { type = string }
 
-variable "vpc_id" {
-  description = "VPC für Lambda (muss mit RDS übereinstimmen)"
-  type        = string
-}
-
-variable "subnet_ids" {
-  description = "Subnets für Lambda ENIs"
-  type        = list(string)
-}
-
 variable "source_dir" {
   description = "Pfad zum Lambda-Sourcecode (wird gezippt)"
   type        = string

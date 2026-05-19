@@ -55,10 +55,6 @@ module "database" {
   environment = var.environment
   vpc_id      = data.aws_vpc.default.id
   subnet_ids  = data.aws_subnets.default.ids
-  allowed_security_group_ids = [
-    module.processor.security_group_id,
-    module.api.security_group_id,
-  ]
   db_name     = "claims"
   db_username = var.db_username
   db_password = var.db_password
@@ -69,8 +65,6 @@ module "processor" {
   source      = "../../modules/processor"
   project     = var.project
   environment = var.environment
-  vpc_id      = data.aws_vpc.default.id
-  subnet_ids  = data.aws_subnets.default.ids
   source_dir  = "${path.module}/../../lambda-src/processor"
   bucket_id   = module.storage.bucket_id
   bucket_arn  = module.storage.bucket_arn
@@ -86,8 +80,6 @@ module "api" {
   source      = "../../modules/api"
   project     = var.project
   environment = var.environment
-  vpc_id      = data.aws_vpc.default.id
-  subnet_ids  = data.aws_subnets.default.ids
   source_dir  = "${path.module}/../../lambda-src/api"
   bucket_name = module.storage.bucket_name
   bucket_arn  = module.storage.bucket_arn

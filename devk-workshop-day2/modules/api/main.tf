@@ -4,21 +4,6 @@ data "archive_file" "api_lambda" {
   output_path = "${path.module}/build/api.zip"
 }
 
-resource "aws_security_group" "lambda" {
-  name        = "${var.project}-${var.environment}-api-lambda"
-  description = "Egress for claims API Lambda"
-  vpc_id      = var.vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = var.tags
-}
-
 resource "aws_iam_role" "lambda" {
   name = "${var.project}-${var.environment}-api-role"
 
@@ -34,9 +19,10 @@ resource "aws_iam_role" "lambda" {
   tags = var.tags
 }
 
-resource "aws_iam_role_policy_attachment" "vpc_access" {
+# Basis-Permissions: CloudWatch Logs schreiben
+resource "aws_iam_role_policy_attachment" "basic_execution" {
   role       = aws_iam_role.lambda.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 resource "aws_iam_role_policy" "s3_presign" {
@@ -70,11 +56,6 @@ resource "aws_lambda_function" "api" {
   memory_size      = 256
 
   layers = var.layers
-
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.lambda.id]
-  }
 
   environment {
     variables = {

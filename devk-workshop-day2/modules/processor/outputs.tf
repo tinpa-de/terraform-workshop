@@ -8,11 +8,6 @@ output "function_arn" {
   value       = aws_lambda_function.processor.arn
 }
 
-output "security_group_id" {
-  description = "Security Group ID der Lambda - wird für RDS-Ingress benötigt"
-  value       = aws_security_group.lambda.id
-}
-
 output "log_group_name" {
   description = "CloudWatch Log Group für Debugging"
   value       = aws_cloudwatch_log_group.lambda.name
