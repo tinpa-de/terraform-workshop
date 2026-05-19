@@ -1,1 +1,1 @@
-dynamodb_table_name="terraform-state-lock-NAME" # Change NAME to your name to avoid conflicts with other workshop participants
+dynamodb_table_name="terraform-state-lock-juli" # Change NAME to your name to avoid conflicts with other workshop participants
