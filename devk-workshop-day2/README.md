@@ -9,22 +9,15 @@ wird beim Upload getriggert, extrahiert Metadaten und schreibt sie in eine
 bietet REST-Endpoints zum Anlegen und Abfragen von Schadensmeldungen.
 
 ```
-                            ┌─────────────────┐
-                            │   API Gateway   │  POST /claims
-                            │   (HTTP API)    │  GET  /claims
-                            └────────┬────────┘
-                                     │
-                                     ▼
-   ┌──────────┐      Upload     ┌─────────────┐    INSERT    ┌──────────┐
-   │ Browser  │ ──────────────► │  API Lambda │ ───────────► │   RDS    │
-   └──────────┘                 └─────────────┘              │ Postgres │
-        │                                                    └─────▲────┘
-        │ presigned PUT                                            │
-        ▼                                                          │ INSERT
-   ┌──────────┐                                                    │
-   │    S3    │ ───── ObjectCreated ────► ┌──────────────────┐ ────┘
-   │  Bucket  │                          │ Processor Lambda │
-   └──────────┘                          └──────────────────┘
+                   ① POST /claims    ┌──────────────────┐
+   ┌─────────┐ ──────────────────►  │   API Gateway    │
+   │ Browser │  GET /claims         │   + API Lambda   │──── ② INSERT ────► ┌──────────────┐
+   └────┬────┘ ◄──────────────────  │  GET /claims/{id}│                    │ RDS Postgres │
+        │        ③ { upload_url }   └──────────────────┘                    └──────▲───────┘
+        │                                                                           │
+        │ ④ PUT (presigned URL)     ┌──────────┐   ⑤ ObjectCreated   ┌────────────┴────────┐
+        └──────────────────────────►│    S3    │──────────────────►  │  Processor Lambda   │
+                                    └──────────┘                      └─────────────────────┘
 ```
 
 ---
