@@ -139,3 +139,18 @@ aws rds describe-db-instances --db-instance-identifier devk-dev-claims
 aws apigatewayv2 get-apis
 curl -v https://xxx.execute-api.eu-central-1.amazonaws.com/claims
 ```
+
+---
+
+## Nützliche Links für diesen Workshop
+
+| Was | Link |
+|-----|------|
+| Terraform AWS Provider Docs | https://registry.terraform.io/providers/hashicorp/aws/latest/docs |
+| aws_s3_bucket | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket |
+| aws_lambda_function | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function |
+| aws_db_instance (RDS) | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance |
+| aws_apigatewayv2_api | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api |
+| aws_security_group | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group |
+| aws_iam_role | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role |
+| Klayers (Lambda Layer ARNs) | https://api.klayers.cloud/api/v2/p3.12/layers/latest/eu-central-1/html |

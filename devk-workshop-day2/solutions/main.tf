@@ -1,3 +1,6 @@
+# Musterlösung: envs/dev/main.tf (vollständig ausgefüllt)
+# Diese Datei zeigt, wie die Module korrekt verdrahtet werden.
+
 terraform {
   required_version = ">= 1.6"
 
@@ -12,15 +15,10 @@ provider "aws" {
   region = var.region
 }
 
-# Eindeutiger Suffix für globalen S3-Namespace
 resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# Default VPC nutzen (spart 30 Min VPC-Setup im Workshop).
-# Voraussetzung: Default-VPC existiert im Account.
-# Prüfen: aws ec2 describe-vpcs --filters Name=isDefault,Values=true
-# Falls nicht vorhanden: aws ec2 create-default-vpc
 data "aws_vpc" "default" {
   default = true
 }
@@ -40,22 +38,9 @@ locals {
     Workshop    = "DEVK-2026"
   }
 
-  # Öffentlicher Lambda Layer für psycopg2 (Postgres-Client für Python).
-  # Quelle: https://github.com/keithrozario/Klayers (Account 770693421928)
-  # Aktuelle ARNs für eu-central-1: https://api.klayers.cloud/api/v2/p3.12/layers/latest/eu-central-1/html
-  # Version ":1" hier für Reproduzierbarkeit im Workshop – in Produktion
-  # eigenen Layer bauen oder die neueste Version verwenden.
   psycopg2_layer_arn = "arn:aws:lambda:${var.region}:770693421928:layer:Klayers-p312-psycopg2-binary:1"
 }
 
-# =============================================================================
-# Part 1: Foundation – Storage & Database
-# =============================================================================
-
-# TODO A: Storage-Modul aufrufen
-# Schaut euch modules/storage/outputs.tf an – welche Outputs gibt das Modul?
-# Der Bucket-Name wird später von processor + api gebraucht.
-#
 module "storage" {
   source      = "../../modules/storage"
   project     = var.project
@@ -64,10 +49,6 @@ module "storage" {
   tags        = local.tags
 }
 
-# TODO B: Database-Modul aufrufen und mit dem Storage-Modul verbinden
-# Welche Security-Group-IDs muss allowed_security_group_ids enthalten?
-# (Tipp: Schaut euch modules/processor/outputs.tf und modules/api/outputs.tf an)
-#
 module "database" {
   source      = "../../modules/database"
   project     = var.project
@@ -75,20 +56,14 @@ module "database" {
   vpc_id      = data.aws_vpc.default.id
   subnet_ids  = data.aws_subnets.default.ids
   allowed_security_group_ids = [
-    # TODO: Welche Security Groups müssen hier rein? (Hinweis: processor + api)
-    # module.???.security_group_id,
-    # module.???.security_group_id,
+    module.processor.security_group_id,
+    module.api.security_group_id,
   ]
   db_name     = "claims"
   db_username = var.db_username
   db_password = var.db_password
   tags        = local.tags
 }
-
-# =============================================================================
-# Part 2: Application – Lambda & API Gateway
-# (vorgegeben – beobachten und verstehen)
-# =============================================================================
 
 module "processor" {
   source      = "../../modules/processor"
