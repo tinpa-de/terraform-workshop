@@ -1,8 +1,10 @@
 terraform {
-  backend "s3" {
-    bucket = "terraform-state-nl-devk"
-    key    = "infrastructure-juli" # Change NAME to your name to avoid conflicts with other workshop participants
-  }
+#  backend "s3" {
+#    bucket = "terraform-state-nl-devk-workshop"
+#    key    = "infrastructure-juli" # Change NAME to your name to avoid conflicts with other workshop participants
+#    region = "eu-west-1"
+#    dynamodb_table = "terraform-state-lock-juli"
+#  }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
