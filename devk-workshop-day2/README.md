@@ -11,8 +11,8 @@ bietet REST-Endpoints zum Anlegen und Abfragen von Schadensmeldungen.
 ```
                    ① POST /claims    ┌──────────────────┐
    ┌─────────┐ ──────────────────►  │   API Gateway    │
-   │ Browser │  GET /claims         │   + API Lambda   │──── ② INSERT ────► ┌──────────────┐
-   └────┬────┘ ◄──────────────────  │  GET /claims/{id}│                    │ RDS Postgres │
+   │ Browser │                      │   + API Lambda   │──── ② INSERT ────► ┌──────────────┐
+   └────┬────┘ ◄──────────────────  │                  │                    │ RDS Postgres │
         │        ③ { upload_url }   └──────────────────┘                    └──────▲───────┘
         │                                                                           │
         │ ④ PUT (presigned URL)     ┌──────────┐   ⑤ ObjectCreated   ┌────────────┴────────┐
