@@ -150,22 +150,7 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 > um die Infrastruktur Schritt für Schritt aufzubauen. Im Alltag: einfach
 > `terraform apply` über alles.
 
-### Schritt 1.3 – TODO B: Module verdrahten (11:20 – 11:35)
-
-Öffnet `envs/dev/main.tf`. Beim `module "database"` gibt es ein **TODO B**:
-
-```hcl
-allowed_security_group_ids = [
-  # TODO: Welche Security Groups müssen hier rein?
-]
-```
-
-Schaut euch `modules/processor/outputs.tf` und `modules/api/outputs.tf` an.
-Welcher Output liefert die Security-Group-ID? Tragt die richtigen Referenzen ein.
-
-> Lösung: `solutions/main.tf`
-
-### Schritt 1.4 – Datenbank starten (11:35 – 12:00)
+### Schritt 1.3 – Datenbank starten (11:20 – 12:00)
 
 ```bash
 terraform apply -target=module.database
@@ -177,7 +162,7 @@ zu lesen.
 **Diskussionspunkte während der Wartezeit:**
 - Warum `skip_final_snapshot = true`? (Wann ist das gefährlich?)
 - Warum ist `db_password` als `sensitive = true` markiert?
-- `publicly_accessible = false` – wie kommt die Lambda trotzdem ran?
+- `publicly_accessible = true` – warum ist das hier eine Vereinfachung, und wie würde es in Produktion aussehen?
 - Was ist ein Subnet Group und warum braucht RDS das?
 
 ---
