@@ -1,12 +1,16 @@
 # DEVK Terraform Workshop – Tag 2
 
-## Use Case: Schadensmeldungs-Portal (Claims Intake)
+Heute baut ihr das Backend eines Schadensmeldungs-Portals. Versicherungsnehmer können Schäden online melden, Dokumente hochladen und den Status abrufen.
 
-Wir bauen das Backend für ein Portal, mit dem Versicherungsnehmer Schäden
-online melden können. Dokumente werden in **S3** abgelegt, eine **Lambda-Funktion**
-wird beim Upload getriggert, extrahiert Metadaten und schreibt sie in eine
-**PostgreSQL-Datenbank (RDS)**. Eine zweite Lambda hinter einem **API Gateway**
-bietet REST-Endpoints zum Anlegen und Abfragen von Schadensmeldungen.
+Am Ende des Tages habt ihr:
+- Ein Storage-Modul selbst in Terraform implementiert
+- Eine PostgreSQL-Datenbank auf RDS deployed
+- Zwei Lambda-Funktionen über Terraform provisioniert
+- Ein API Gateway mit drei REST-Endpunkten in Betrieb genommen
+
+---
+
+## Use Case: Schadensmeldungs-Portal
 
 ```
                    ① POST /claims    ┌──────────────────┐
@@ -24,7 +28,7 @@ bietet REST-Endpoints zum Anlegen und Abfragen von Schadensmeldungen.
 
 ## Bezug zu Tag 1
 
-Gestern habt ihr die Grundlagen von Terraform kennengelernt:
+Heute wendet ihr dieselben Konzepte wie gestern an – mit mehr Services und einer echten Anwendung:
 
 | Tag 1 | Tag 2 |
 |-------|-------|
@@ -33,8 +37,18 @@ Gestern habt ihr die Grundlagen von Terraform kennengelernt:
 | Remote State eingerichtet | Remote State weiter nutzen (gleicher Bucket, neuer Key) |
 | Provider, Variablen, Outputs | Alles davon – plus IAM, Lambda, RDS, API Gateway |
 
-Ihr werdet heute genau dieselben Konzepte anwenden – nur mit mehr Services und
-einer echten Anwendung dahinter.
+---
+
+## AWS-Services heute
+
+| Service | Was macht es? | Terraform-Ressource |
+|---------|---------------|---------------------|
+| **S3** | Objektspeicher, unbegrenzt skalierbar | `aws_s3_bucket` |
+| **RDS** | Verwaltete relationale Datenbank | `aws_db_instance` |
+| **Lambda** | Code ohne Server ausführen, event-getriggert | `aws_lambda_function` |
+| **API Gateway** | HTTP-API-Endpunkte verwalten | `aws_apigatewayv2_api` |
+| **Security Group** | Firewall-Regeln für AWS-Ressourcen | `aws_security_group` |
+| **IAM Role** | Berechtigungen für AWS-Services | `aws_iam_role` |
 
 ---
 
@@ -58,8 +72,7 @@ aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
 # Wenn "None" zurückkommt: aws ec2 create-default-vpc
 ```
 
-> ⚠️ **Wichtig:** Am Ende des Workshops bitte `terraform destroy` ausführen –
-> RDS läuft sonst 24/7 und verursacht Kosten.
+> **Wichtig:** Am Ende des Workshops bitte `terraform destroy` ausführen – RDS verursacht sonst laufende Kosten.
 
 ---
 
@@ -69,7 +82,6 @@ aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
 cd envs/dev
 
 # tfvars liegt bereits bereit – Passwort anpassen:
-# (oder per Umgebungsvariable: export TF_VAR_db_password="...")
 cat terraform.tfvars
 
 # Remote State aus Tag 1 weiterverwenden.
@@ -85,53 +97,121 @@ terraform init
 ```
 modules/
 ├── storage/     ← IHR implementiert main.tf  (Aufgabe Part 1)
-├── database/    ← vorgegeben (zu komplex für den Einstieg, aber lesenswert)
+├── database/    ← vorgegeben (lesenswert)
 ├── processor/   ← vorgegeben
 └── api/         ← vorgegeben
 
 envs/dev/
-└── main.tf      ← IHR füllt die TODOs aus    (Aufgabe Part 1 + 2)
+└── main.tf      ← IHR füllt TODO A aus      (Aufgabe Part 1)
 ```
+
+**Euer Workflow für jeden Schritt:**
+
+```
+.tf-Datei schreiben  →  terraform validate  →  terraform plan  →  terraform apply
+```
+
+Führt `terraform validate` und `terraform plan` nach jeder neuen Ressource aus. So seht ihr Fehler früh und versteht, was Terraform vorhat.
 
 ---
 
-## Part 1 (10:00 – 12:00): Storage-Modul + Integration
+## Part 1: Storage-Modul + Datenbank
 
-### Kontext: AWS-Services im Überblick (10:00 – 10:15)
+### Schritt 1.1 – Storage-Modul implementieren
 
-Kurze Vorstellung der heutigen Services – nur das Nötigste zum Verstehen:
+**Ziel:** Implementiert `modules/storage/main.tf`. Das Modul soll einen S3-Bucket mit Versionierung, serverseitiger Verschlüsselung und Public-Access-Block anlegen.
 
-| Service | Was macht es? | Terraform-Ressource |
-|---------|---------------|---------------------|
-| **S3** | Objektspeicher, unbegrenzt skalierbar | `aws_s3_bucket` |
-| **RDS** | Verwaltete relationale Datenbank | `aws_db_instance` |
-| **Lambda** | Code ohne Server ausführen, event-getriggert | `aws_lambda_function` |
-| **API Gateway** | HTTP-API-Endpunkte verwalten | `aws_apigatewayv2_api` |
-| **Security Group** | Firewall-Regeln für AWS-Ressourcen | `aws_security_group` |
-| **IAM Role** | Berechtigungen für AWS-Services | `aws_iam_role` |
-
-### Schritt 1.1 – Aufgabe: Storage-Modul implementieren (10:15 – 11:00)
-
-Öffnet `modules/storage/EXERCISE.md` – dort steht alles, was ihr wissen müsst.
-
-**Kurzfassung:**
-- Lest `modules/storage/variables.tf` und `modules/storage/outputs.tf`
-- Implementiert `modules/storage/main.tf` (TODO-Kommentare als Leitfaden)
-- Ziel: S3-Bucket mit Versionierung, Verschlüsselung, Public Access Block
+Lest zuerst `modules/storage/EXERCISE.md` – dort stehen alle Anforderungen. Lest außerdem `modules/storage/variables.tf` und `modules/storage/outputs.tf`, damit ihr wisst, welche Inputs und Outputs das Modul hat.
 
 ```bash
-# Zwischentesten nach jeder Ressource:
+# Nach jeder neuen Ressource testen:
 terraform validate
 terraform plan -target=module.storage
 ```
 
 > Lösung bei Bedarf: `solutions/storage/main.tf`
 
-### Schritt 1.2 – Storage deployen + testen (11:00 – 11:20)
+<details>
+<summary>Hinweis – Ressource 1: S3-Bucket</summary>
+
+```hcl
+resource "aws_s3_bucket" "claims" {
+  bucket = "${var.project}-${var.environment}-claims-${var.suffix}"
+  tags   = var.tags
+}
+```
+
+Der Bucket-Name muss global eindeutig sein. Der Suffix aus `random_id` sorgt dafür.
+
+</details>
+
+<details>
+<summary>Hinweis – Ressource 2: Versionierung</summary>
+
+```hcl
+resource "aws_s3_bucket_versioning" "claims" {
+  bucket = aws_s3_bucket.claims.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Hinweis – Ressource 3: Verschlüsselung</summary>
+
+```hcl
+resource "aws_s3_bucket_server_side_encryption_configuration" "claims" {
+  bucket = aws_s3_bucket.claims.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Hinweis – Ressource 4: Public Access Block</summary>
+
+```hcl
+resource "aws_s3_bucket_public_access_block" "claims" {
+  bucket = aws_s3_bucket.claims.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+```
+
+</details>
+
+**Terraform-Dokumentation:**
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block
+
+---
+
+### Schritt 1.2 – Storage deployen und testen
+
+**Ziel:** Das Storage-Modul in `envs/dev/main.tf` einbinden (TODO A) und deployen.
+
+Öffnet `envs/dev/main.tf` und schaut euch die TODO-Kommentare an. Schaut euch außerdem `modules/storage/outputs.tf` an – welche Outputs gibt das Modul zurück? Diese werden später von `processor` und `api` benötigt.
 
 ```bash
 terraform apply -target=module.storage
 ```
+
+**Überprüfen:**
 
 ```bash
 BUCKET=$(terraform output -raw s3_bucket)
@@ -146,46 +226,54 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 # Erwartet: { "Status": "Enabled" }
 ```
 
-> 💡 `-target` ist normalerweise ein Code Smell. Wir nutzen es heute bewusst,
-> um die Infrastruktur Schritt für Schritt aufzubauen. Im Alltag: einfach
-> `terraform apply` über alles.
+> `-target` ist normalerweise ein Code Smell. Wir nutzen es heute bewusst, um die Infrastruktur schrittweise aufzubauen. Im Alltag: `terraform apply` ohne `-target`.
 
-### Schritt 1.3 – Datenbank starten (11:20 – 12:00)
+---
+
+### Schritt 1.3 – Datenbank starten
+
+**Ziel:** Die RDS-Instanz deployen.
 
 ```bash
 terraform apply -target=module.database
 ```
 
-⏳ Das dauert ~8–10 Minuten. Nutzt die Zeit, um `modules/database/main.tf`
-zu lesen.
+Das dauert ca. 8–10 Minuten. Nutzt die Zeit, um `modules/database/main.tf` zu lesen.
 
 **Diskussionspunkte während der Wartezeit:**
 - Warum `skip_final_snapshot = true`? (Wann ist das gefährlich?)
 - Warum ist `db_password` als `sensitive = true` markiert?
 - `publicly_accessible = true` – warum ist das hier eine Vereinfachung, und wie würde es in Produktion aussehen?
-- Was ist ein Subnet Group und warum braucht RDS das?
+- Was ist eine Subnet Group und warum braucht RDS das?
 
 ---
 
-## Part 2 (13:00 – 14:45): Application Layer deployen + verstehen
+## Part 2: Application Layer deployen und verstehen
 
-### Schritt 2.1 – Guided Tour: Processor-Modul (13:00 – 13:20)
+### Schritt 2.1 – Guided Tour: Processor-Modul
 
-Gemeinsam lesen wir `modules/processor/main.tf`.
+**Ziel:** Verstehen, wie Lambda per Terraform provisioniert wird und wie S3-Events funktionieren.
 
-Was passiert hier alles?
+Lest gemeinsam `modules/processor/main.tf`. Was passiert hier?
+
 1. `data.archive_file` – Source-Code wird gezippt
 2. `aws_iam_role` + Policy – Lambda bekommt Berechtigungen (S3 lesen, RDS erreichen)
-3. `aws_lambda_function` – Python-Funktion in der VPC
-4. `aws_s3_bucket_notification` – Bucket ruft Lambda bei jedem Upload
+3. `aws_lambda_function` – Python-Funktion, event-getriggert
+4. `aws_s3_bucket_notification` – Bucket ruft Lambda bei jedem Upload auf
 
 Schaut auch in `lambda-src/processor/handler.py` – was macht der Code konkret?
 
-### Schritt 2.2 – Processor deployen + testen (13:20 – 13:45)
+---
+
+### Schritt 2.2 – Processor deployen und testen
+
+**Ziel:** Die Processor-Lambda deployen und mit einem echten S3-Upload testen.
 
 ```bash
 terraform apply -target=module.processor
 ```
+
+**Überprüfen:**
 
 ```bash
 # Upload simuliert eine Schadensmeldung
@@ -197,23 +285,28 @@ aws s3 cp /tmp/schaden.jpg \
 aws logs tail $(terraform output -raw processor_log_group) --follow
 ```
 
-Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und
-schreibt einen Eintrag.
+Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schreibt einen Eintrag.
 
-### Schritt 2.3 – API deployen (13:45 – 14:00)
+---
+
+### Schritt 2.3 – API deployen
+
+**Ziel:** Das gesamte Setup vervollständigen.
 
 ```bash
-# Ohne -target – vervollständigt jetzt alles
+# Ohne -target – deployed jetzt alles
 terraform apply
 ```
 
-Kurzer Blick in `modules/api/main.tf`: API Gateway v2 (HTTP API),
-3 Routen, Lambda-Integration.
+Schaut kurz in `modules/api/main.tf`: API Gateway v2 (HTTP API), 3 Routen, Lambda-Integration.
 
-Und `lambda-src/api/handler.py`: Wie werden Routen gematcht? Wie wird
-die presigned URL generiert?
+Und in `lambda-src/api/handler.py`: Wie werden Routen gematcht? Wie wird die presigned URL generiert?
 
-### Schritt 2.4 – End-to-End testen (14:00 – 14:45)
+---
+
+### Schritt 2.4 – End-to-End testen
+
+**Ziel:** Den vollständigen Claim-Flow vom POST bis zum S3-Upload durchspielen.
 
 ```bash
 API_URL=$(terraform output -raw api_url)
@@ -236,9 +329,7 @@ curl -s ${API_URL}/claims/CLM-XXXXXXXXXX | jq
 
 **Presigned URL – der Browser-Upload-Flow:**
 
-Im POST-Response ist eine `upload_url`. Das ist eine AWS Presigned URL –
-sie erlaubt einem Browser, direkt nach S3 zu uploaden, ohne eigene
-AWS-Credentials zu haben. Schaut im `api/handler.py` nach, wie sie erzeugt wird.
+Im POST-Response ist eine `upload_url`. Das ist eine AWS Presigned URL – sie erlaubt einem Browser, direkt nach S3 zu uploaden, ohne eigene AWS-Credentials zu haben. Schaut in `lambda-src/api/handler.py` nach, wie sie erzeugt wird.
 
 ```bash
 # Presigned URL aus der POST-Antwort nehmen und damit direkt hochladen:
@@ -248,11 +339,17 @@ curl -X PUT "${UPLOAD_URL}" \
   --data-binary @/tmp/schaden.jpg
 ```
 
-Danach: Prozessor-Logs checken – wurde das Dokument registriert?
+**Überprüfen:** Prozessor-Logs checken – wurde das Dokument registriert?
+
+```bash
+aws logs tail $(terraform output -raw processor_log_group) --follow
+```
 
 ---
 
-## Aufräumen (WICHTIG!)
+## Aufräumen
+
+> **Wichtig:** Bitte am Ende des Workshops aufräumen – RDS verursacht sonst laufende Kosten.
 
 ```bash
 # S3-Bucket muss leer sein, sonst schlägt destroy fehl
@@ -263,10 +360,9 @@ terraform destroy
 
 ---
 
-## Best Practices Block (15:00 – 15:30)
+## Best Practices
 
-Wir diskutieren, was in diesem Setup **bewusst vereinfacht** ist und wie
-man es produktionsreif machen würde. Leitfaden: `docs/best-practices.md`
+Was in diesem Setup bewusst vereinfacht ist und wie man es produktionsreif machen würde – Leitfaden: `docs/best-practices.md`
 
 | Workshop-Vereinfachung | Produktion |
 |------------------------|-----------|
@@ -289,5 +385,4 @@ Siehe `docs/troubleshooting.md` und `docs/cheatsheet.md`.
 Häufige Stolpersteine:
 - **Default VPC fehlt**: `aws ec2 create-default-vpc`
 - **terraform.tfvars fehlt**: `cp terraform.tfvars.example terraform.tfvars`
-- **Lambda kann RDS nicht erreichen**: Security Group in TODO B korrekt?
 - **Lambda Layer nicht gefunden**: Aktuelle ARN auf https://api.klayers.cloud prüfen
