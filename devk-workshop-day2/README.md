@@ -60,7 +60,9 @@ Vor dem ersten `terraform init` bitte prüfen:
 # 1. Terraform-Version
 terraform version   # sollte >= 1.6 sein
 
-# 2. AWS-Credentials
+# 2. AWS-Credentials (Session aus Tag 1 erneuern falls abgelaufen)
+aws sso login --profile workshop
+export AWS_PROFILE=workshop
 aws sts get-caller-identity   # muss eine Account-ID zurückgeben
 
 # 3. Region prüfen
@@ -80,7 +82,17 @@ aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
 
 ```bash
 cd envs/dev
+```
 
+Öffnet `backend.tf` und tragt euren persönlichen Namen ein – denselben, den ihr in Tag 1 für die DynamoDB-Tabelle verwendet habt:
+
+```hcl
+dynamodb_table = "terraform-state-lock-NAME"   # ← euer Name aus Tag 1
+```
+
+Dann:
+
+```bash
 # tfvars liegt bereits bereit – Passwort anpassen:
 cat terraform.tfvars
 

@@ -141,7 +141,13 @@ When prompted for the **SSO start URL**, enter:
 https://nl.awsapps.com/start
 ```
 
-Accept the defaults for any other prompts (or follow the instructions from the workshop host). A browser tab will open for you to approve the login. Once you see the confirmation, return to your terminal.
+When prompted for the **SSO region**, enter:
+
+```
+eu-west-1
+```
+
+Accept the defaults for any other prompts. A browser tab will open for you to approve the login. Once you see the confirmation, return to your terminal.
 
 **Tell the AWS CLI which profile to use:**
 
