@@ -118,9 +118,25 @@ Führt `terraform validate` und `terraform plan` nach jeder neuen Ressource aus.
 
 ### Schritt 1.1 – Storage-Modul implementieren
 
-**Ziel:** Implementiert `modules/storage/main.tf`. Das Modul soll einen S3-Bucket mit Versionierung, serverseitiger Verschlüsselung und Public-Access-Block anlegen.
+**Ziel:** Implementiert `modules/storage/main.tf`. Das Modul soll einen S3-Bucket mit Versionierung, serverseitiger Verschlüsselung und Public-Access-Block anlegen — so wie es die Anforderungen für ein Schadensmeldungs-Portal erfordern.
 
-Lest zuerst `modules/storage/EXERCISE.md` – dort stehen alle Anforderungen. Lest außerdem `modules/storage/variables.tf` und `modules/storage/outputs.tf`, damit ihr wisst, welche Inputs und Outputs das Modul hat.
+Gestern habt ihr bereits S3-Ressourcen gebaut. Heute geht es einen Schritt weiter: Versionierung, Verschlüsselung und Lifecycle.
+
+**Anforderungen:**
+
+| # | Was | Warum |
+|---|-----|-------|
+| 1 | S3-Bucket mit Name `{project}-{environment}-claims-{suffix}` | Eindeutiger Name im globalen S3-Namespace |
+| 2 | Versionierung aktivieren | Dokumente dürfen nicht verloren gehen |
+| 3 | Verschlüsselung mit AES256 | Daten at-rest verschlüsseln (DSGVO) |
+| 4 | Public Access Block (alle 4 Flags = true) | Bucket darf nie öffentlich zugänglich sein |
+| 5 | Lifecycle-Regel (Bonus) | Alte Versionen nach 90 Tagen löschen |
+
+**Wo anfangen:**
+
+1. Öffnet `modules/storage/variables.tf` — was steht euch zur Verfügung?
+2. Öffnet `modules/storage/outputs.tf` — was soll das Modul nach außen geben?
+3. Implementiert `modules/storage/main.tf` Ressource für Ressource
 
 ```bash
 # Nach jeder neuen Ressource testen:
@@ -192,11 +208,36 @@ resource "aws_s3_bucket_public_access_block" "claims" {
 
 </details>
 
+<details>
+<summary>Hinweis – Ressource 5 (Bonus): Lifecycle-Regel</summary>
+
+Eine Lifecycle-Regel löscht automatisch alte Objektversionen nach einer definierten Anzahl von Tagen — spart Speicherkosten.
+
+```hcl
+resource "aws_s3_bucket_lifecycle_configuration" "claims" {
+  bucket = aws_s3_bucket.claims.id
+
+  rule {
+    id     = "expire-old-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 90
+    }
+  }
+}
+```
+
+`noncurrent_version_expiration` gilt nur für ältere Versionen — die aktuelle Version bleibt erhalten.
+
+</details>
+
 **Terraform-Dokumentation:**
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration
 
 ---
 
