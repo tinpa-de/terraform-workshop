@@ -1,8 +1,4 @@
 terraform {
-  backend "s3" {
-    bucket = "terraform-state-nl-devk"
-    key    = "infrastructure-NAME" # Change NAME to your name to avoid conflicts with other workshop participants
-  }
   required_providers {
     aws = {
       source  = "hashicorp/aws"

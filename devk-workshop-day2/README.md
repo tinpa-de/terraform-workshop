@@ -34,7 +34,7 @@ Heute wendet ihr dieselben Konzepte wie gestern an – mit mehr Services und ein
 |-------|-------|
 | Einfache S3-Ressourcen | S3 mit Versionierung, Verschlüsselung, Lifecycle |
 | Ein eigenes Modul gebaut | Modul selbst implementieren + vorgefertigte Module nutzen |
-| Remote State eingerichtet | Remote State weiter nutzen (gleicher Bucket, neuer Key) |
+| Local State genutzt | Local State weiter nutzen |
 | Provider, Variablen, Outputs | Alles davon – plus IAM, Lambda, RDS, API Gateway |
 
 ---
@@ -82,23 +82,10 @@ aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
 
 ```bash
 cd envs/dev
-```
 
-Öffnet `backend.tf` und tragt euren persönlichen Namen ein – denselben, den ihr in Tag 1 für die DynamoDB-Tabelle verwendet habt:
-
-```hcl
-dynamodb_table = "terraform-state-lock-NAME"   # ← euer Name aus Tag 1
-```
-
-Dann:
-
-```bash
 # tfvars liegt bereits bereit – Passwort anpassen:
 cat terraform.tfvars
 
-# Remote State aus Tag 1 weiterverwenden.
-# Bucket-Namen anpassen, falls euer Bucket einen anderen Namen hat:
-# terraform init -backend-config="bucket=terraform-state-nl-devk-XXXX"
 terraform init
 ```
 
