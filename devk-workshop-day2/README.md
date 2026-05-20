@@ -52,42 +52,87 @@ Heute wendet ihr dieselben Konzepte wie gestern an – mit mehr Services und ein
 
 ---
 
-## Voraussetzungen
+## Setup
 
-Vor dem ersten `terraform init` bitte prüfen:
+Arbeitet alle vier Schritte der Reihe nach durch. Wenn etwas nicht klappt, fragt bevor ihr weitermacht.
 
-```bash
-# 1. Terraform-Version
-terraform version   # sollte >= 1.6 sein
-
-# 2. AWS-Credentials (Session aus Tag 1 erneuern falls abgelaufen)
-aws sso login --profile workshop
-export AWS_PROFILE=workshop
-aws sts get-caller-identity   # muss eine Account-ID zurückgeben
-
-# 3. Region prüfen
-aws configure get region   # sollte eu-central-1 sein
-
-# 4. Default-VPC (RDS braucht eine Subnet Group)
-aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
-  --query 'Vpcs[0].VpcId' --output text
-# Wenn "None" zurückkommt: aws ec2 create-default-vpc
-```
-
-> **Wichtig:** Am Ende des Workshops bitte `terraform destroy` ausführen – RDS verursacht sonst laufende Kosten.
+> **Wichtig:** Am Ende des Workshops `terraform destroy` ausführen – RDS läuft sonst weiter und verursacht Kosten.
 
 ---
 
-## Setup
+### Schritt 1 – AWS-Session erneuern
+
+SSO-Sessions aus Tag 1 laufen nach einigen Stunden ab. Erneuert die Session und setzt das Profil — die `AWS_PROFILE`-Variable muss in jedem neuen Terminalfenster neu gesetzt werden.
+
+```bash
+aws sso login --profile workshop
+```
+
+macOS / Linux:
+```bash
+export AWS_PROFILE=workshop
+```
+
+Windows (PowerShell):
+```powershell
+$env:AWS_PROFILE = "workshop"
+```
+
+> Wenn ihr später unerklärliche Authentifizierungsfehler bekommt: das ist meistens der erste Ort, den ihr prüfen solltet.
+
+**Überprüfen:**
+
+```bash
+aws sts get-caller-identity
+```
+
+Der Befehl muss eine Account-ID zurückgeben. Eine Fehlermeldung bedeutet, die Session ist noch nicht aktiv.
+
+---
+
+### Schritt 2 – Default-VPC prüfen
+
+RDS benötigt eine Subnet Group, die mindestens zwei Availability Zones abdeckt. Wir nutzen dafür den Default-VPC, der in jedem AWS-Account vorhanden sein sollte.
+
+**Überprüfen:**
+
+```bash
+aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
+  --query 'Vpcs[0].VpcId' --output text
+```
+
+Ihr solltet eine VPC-ID sehen, z.B. `vpc-0a1b2c3d`. Falls die Ausgabe `None` lautet:
+
+```bash
+aws ec2 create-default-vpc
+```
+
+---
+
+### Schritt 3 – Datenbankpasswort setzen
+
+`terraform.tfvars` liegt bereits bereit, enthält aber einen Platzhalter als Passwort. Öffnet die Datei und setzt ein eigenes Passwort. Die Datei ist in `.gitignore` — sie wird nie ins Repository eingecheckt.
 
 ```bash
 cd envs/dev
-
-# tfvars liegt bereits bereit – Passwort anpassen:
 cat terraform.tfvars
+```
 
+Öffnet `terraform.tfvars` in eurem Editor und ersetzt `BitteHierEinStarkesPasswortSetzen!` durch ein eigenes Passwort.
+
+**Überprüfen:** Der Platzhalter ist durch ein eigenes Passwort ersetzt.
+
+---
+
+### Schritt 4 – Terraform initialisieren
+
+Lädt die Provider-Plugins herunter und registriert die Module:
+
+```bash
 terraform init
 ```
+
+Ihr solltet sehen: `Terraform has been successfully initialized!` Ihr seid jetzt bereit, mit den Aufgaben zu beginnen.
 
 ---
 
@@ -149,86 +194,53 @@ terraform plan -target=module.storage
 <details>
 <summary>Hinweis – Ressource 1: S3-Bucket</summary>
 
-```hcl
-resource "aws_s3_bucket" "claims" {
-  bucket = "${var.project}-${var.environment}-claims-${var.suffix}"
-  tags   = var.tags
-}
-```
+`aws_s3_bucket` braucht ein `bucket` Argument für den Namen. Bucket-Namen müssen global eindeutig sein — baut ihn aus den Variablen zusammen, die euch zur Verfügung stehen: `var.project`, `var.environment` und `var.suffix`. Terraform-Stringinterpolation funktioniert so: `"${var.project}-weiterer-text"`. Setzt außerdem `tags = var.tags`.
 
-Der Bucket-Name muss global eindeutig sein. Der Suffix aus `random_id` sorgt dafür.
+Schaut in `variables.tf`, welche Variablen das Modul bekommt — ihr müsst nichts hart codieren.
 
 </details>
 
 <details>
 <summary>Hinweis – Ressource 2: Versionierung</summary>
 
-```hcl
-resource "aws_s3_bucket_versioning" "claims" {
-  bucket = aws_s3_bucket.claims.id
+`aws_s3_bucket_versioning` braucht ein `bucket` Argument — referenziert euren Bucket mit `aws_s3_bucket.claims.id` (kein hartcodierter Name, sondern eine Ressourcenreferenz). Das ist dasselbe Muster wie in Tag 1.
 
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-```
+Innerhalb des Blocks kommt ein `versioning_configuration` Block mit einem `status` Argument. Welchen Wert muss `status` haben, damit Versionierung aktiv ist?
 
 </details>
 
 <details>
 <summary>Hinweis – Ressource 3: Verschlüsselung</summary>
 
-```hcl
-resource "aws_s3_bucket_server_side_encryption_configuration" "claims" {
-  bucket = aws_s3_bucket.claims.id
+`aws_s3_bucket_server_side_encryption_configuration` hat eine verschachtelte Struktur — das ist bei AWS-Ressourcen in Terraform häufig so. Der Aufbau: ein `rule` Block, darin ein `apply_server_side_encryption_by_default` Block, darin das Argument `sse_algorithm`.
 
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-```
+Der Wert für serverseitige Verschlüsselung ohne eigene Schlüssel lautet `"AES256"`.
 
 </details>
 
 <details>
 <summary>Hinweis – Ressource 4: Public Access Block</summary>
 
-```hcl
-resource "aws_s3_bucket_public_access_block" "claims" {
-  bucket = aws_s3_bucket.claims.id
+`aws_s3_bucket_public_access_block` hat vier boolean-Argumente, die jeweils einen anderen Aspekt des öffentlichen Zugriffs steuern:
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-```
+- `block_public_acls`
+- `block_public_policy`
+- `ignore_public_acls`
+- `restrict_public_buckets`
+
+Alle vier sollen `true` sein. Das ist die sichere Standardkonfiguration für einen Bucket, der nie öffentlich zugänglich sein soll — im Gegensatz zu Tag 1, wo ihr Public Access bewusst aufgemacht habt.
 
 </details>
 
 <details>
 <summary>Hinweis – Ressource 5 (Bonus): Lifecycle-Regel</summary>
 
-Eine Lifecycle-Regel löscht automatisch alte Objektversionen nach einer definierten Anzahl von Tagen — spart Speicherkosten.
+`aws_s3_bucket_lifecycle_configuration` braucht einen `rule` Block mit drei Teilen:
+- `id` — ein beliebiger Name für die Regel
+- `status = "Enabled"` — damit die Regel aktiv ist
+- einen `noncurrent_version_expiration` Block mit dem Argument `noncurrent_days`
 
-```hcl
-resource "aws_s3_bucket_lifecycle_configuration" "claims" {
-  bucket = aws_s3_bucket.claims.id
-
-  rule {
-    id     = "expire-old-versions"
-    status = "Enabled"
-
-    noncurrent_version_expiration {
-      noncurrent_days = 90
-    }
-  }
-}
-```
-
-`noncurrent_version_expiration` gilt nur für ältere Versionen — die aktuelle Version bleibt erhalten.
+`noncurrent_version_expiration` wirkt nur auf ältere Versionen eines Objekts — die jeweils aktuelle Version bleibt unberührt. Das Argument `noncurrent_days` legt fest, nach wie vielen Tagen alte Versionen automatisch gelöscht werden.
 
 </details>
 
@@ -245,7 +257,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "claims" {
 
 **Ziel:** Das Storage-Modul in `envs/dev/main.tf` einbinden (TODO A) und deployen.
 
-Öffnet `envs/dev/main.tf` und schaut euch die TODO-Kommentare an. Schaut euch außerdem `modules/storage/outputs.tf` an – welche Outputs gibt das Modul zurück? Diese werden später von `processor` und `api` benötigt.
+Öffnet `envs/dev/main.tf` — dort findet ihr den auskommentierten TODO-A-Block. Kommentiert ihn ein und schaut, welche Argumente übergeben werden. Schaut auch in `modules/storage/outputs.tf`: welche Werte gibt das Modul zurück? Diese werden später von `processor` und `api` benötigt.
+
+<details>
+<summary>Hinweis – Modul aufrufen</summary>
+
+Ein `module` Block in Terraform funktioniert wie ein Funktionsaufruf: `source` gibt den Pfad zum Modul an, die übrigen Argumente entsprechen den `variable`-Deklarationen in `modules/storage/variables.tf`. Schaut, welche Variablen das Modul erwartet — und welche Werte aus dem aufrufenden Kontext (`var.*`, `local.*`, `resource.*`) ihr übergeben könnt.
+
+Nach dem Einkommentieren: `terraform init` ist nicht nötig, da das Modul bereits bekannt ist. Direkt mit `terraform validate` starten.
+
+</details>
 
 ```bash
 terraform apply -target=module.storage
