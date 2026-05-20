@@ -48,21 +48,19 @@ locals {
 # =============================================================================
 
 # TODO A: Storage-Modul aufrufen
-# Schaut euch modules/storage/outputs.tf an – welche Outputs gibt das Modul?
+# Schaut euch modules/storage/variables.tf und modules/storage/outputs.tf an.
 # Der Bucket-Name wird später von processor + api gebraucht.
 #
-module "storage" {
-  source      = "../../modules/storage"
-  project     = var.project
-  environment = var.environment
-  suffix      = random_id.suffix.hex
-  tags        = local.tags
-}
+# module "storage" {
+#   source      = "../../modules/storage"
+#   project     = var.project
+#   environment = var.environment
+#   suffix      = random_id.suffix.hex
+#   tags        = local.tags
+# }
 
-# TODO B: Database-Modul vervollständigen
-# Schaut euch modules/database/variables.tf an.
-# Welche Werte müssen für db_name, db_username und db_password übergeben werden?
-#
+# Datenbank-Modul – vorgegeben. Schaut euch modules/database/variables.tf an:
+# Welche Werte werden für db_name, db_username und db_password übergeben?
 module "database" {
   source      = "../../modules/database"
   project     = var.project
