@@ -41,7 +41,7 @@ resource "aws_s3_bucket_policy" "allow_public_website_access" {
 }
 
 resource "aws_cloudfront_origin_access_control" "default" {
-  name                              = "default-oac"
+  name                              = "default-oac-${var.name}"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"

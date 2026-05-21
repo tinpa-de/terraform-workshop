@@ -24,6 +24,36 @@ module "static_page_1" {
   filepath = "../resources/static-page/index.html"
 }
 
+module "static_page_2" {
+  source = "./modules/static-webpage"
+
+  providers = {
+    aws.frankfurt = aws.frankfurt
+  }
+
+  name     = "juli-walkthrough1-workshop-static-page-2"
+  filepath = "../resources/static-page-2/index.html"
+}
+
+module "static_page_3" {
+  source = "./modules/static-webpage"
+
+  providers = {
+    aws.frankfurt = aws.frankfurt
+  }
+
+  name     = "juli-walkthrough1-workshop-static-page-3"
+  filepath = "../resources/static-page-3/index.html"
+}
+
 output "website_url_1" {
   value = module.static_page_1.website_url
+}
+
+output "website_url_2" {
+  value = module.static_page_2.website_url
+}
+
+output "website_url_3" {
+  value = module.static_page_3.website_url
 }
