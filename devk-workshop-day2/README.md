@@ -47,7 +47,7 @@ Heute wendet ihr dieselben Konzepte wie gestern an – mit mehr Services und ein
 | **RDS** | Verwaltete relationale Datenbank | `aws_db_instance` |
 | **Lambda** | Code ohne Server ausführen, event-getriggert | `aws_lambda_function` |
 | **API Gateway** | HTTP-API-Endpunkte verwalten | `aws_apigatewayv2_api` |
-| **Security Group** | Firewall-Regeln für AWS-Ressourcen | `aws_security_group` |
+| **Security Group** | Firewall-Regeln für AWS-Ressourcen | `data "aws_security_group"` (vorab vom Admin erstellt) |
 | **IAM Role** | Berechtigungen für AWS-Services | `aws_iam_role` |
 
 ---
@@ -98,7 +98,8 @@ RDS benötigt eine Subnet Group, die mindestens zwei Availability Zones abdeckt.
 
 ```bash
 aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
-  --query 'Vpcs[0].VpcId' --output text
+  --query 'Vpcs[0].VpcId' --output text \
+  --region eu-central-1
 ```
 
 Ihr solltet eine VPC-ID sehen, z.B. `vpc-0a1b2c3d`. Falls die Ausgabe `None` lautet:
@@ -295,11 +296,28 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 
 **Ziel:** Die RDS-Instanz deployen.
 
+> **Hinweis:** Folgende Ressourcen wurden vorab vom Admin angelegt — Terraform sucht sie per Name, ihr müsst nichts erstellen:
+> - Security Group `devk-dev-rds` (Port 5432, für RDS)
+> - IAM-Rolle `devk-dev-processor-role` (für die Processor-Lambda)
+> - IAM-Rolle `devk-dev-api-role` (für die API-Lambda)
+
 ```bash
 terraform apply -target=module.database
 ```
 
 Das dauert ca. 8–10 Minuten. Nutzt die Zeit, um `modules/database/main.tf` zu lesen.
+
+**Überprüfen:**
+
+```bash
+aws rds describe-db-instances \
+  --db-instance-identifier devk-dev-claims \
+  --query "DBInstances[0].DBInstanceStatus" \
+  --output text \
+  --region eu-central-1
+```
+
+Erwartete Ausgabe: `available`
 
 **Diskussionspunkte während der Wartezeit:**
 - Warum `skip_final_snapshot = true`? (Wann ist das gefährlich?)
