@@ -21,7 +21,6 @@ resource "aws_s3_object" "my_first_s3_object" {
 
 resource "aws_s3_bucket_policy" "allow_public_website_access" {
     bucket = aws_s3_bucket.my_first_s3_bucket.id
-    # depends_on = [aws_s3_bucket_public_access_block.public_access_block]
     policy = jsonencode({
         Version = "2012-10-17"
         Statement = [{
