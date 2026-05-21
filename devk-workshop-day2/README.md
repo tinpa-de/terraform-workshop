@@ -453,7 +453,58 @@ Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schrei
 
 ---
 
-### Schritt 2.3 – API deployen
+### Schritt 2.3 – API-Modul implementieren
+
+**Ziel:** Das API-Modul selbst implementieren — Lambda-Funktion und API Gateway.
+
+Öffnet `modules/api/main.tf`. Zwei TODO-Blöcke warten auf euch.
+
+**Anforderungen:**
+
+| # | Was | Ressource |
+|---|-----|-----------|
+| 1 | CloudWatch Log Group | `aws_cloudwatch_log_group` |
+| 2 | Lambda-Funktion | `aws_lambda_function` |
+| 3 | HTTP API | `aws_apigatewayv2_api` |
+| 4 | Lambda-Integration | `aws_apigatewayv2_integration` |
+| 5 | Drei Routen | `aws_apigatewayv2_route` (×3) |
+| 6 | Permission für API Gateway | `aws_lambda_permission` |
+
+Schaut auch in `lambda-src/api/handler.py` — wie werden Routen gematcht, wie wird die Presigned URL erzeugt?
+
+<details>
+<summary>Hinweis – TODO 1: Lambda-Funktion</summary>
+
+Das Muster ist identisch zum Processor-Modul. Die Unterschiede:
+- `function_name` endet auf `"claims-api"`
+- `timeout = 15` (kürzer als Processor)
+- Zusätzliche Env-Variable: `BUCKET_NAME = var.bucket_name`
+
+Referenziert `local.role_arn` für die IAM-Rolle (bereits vorgegeben).
+
+</details>
+
+<details>
+<summary>Hinweis – TODO 2: API Gateway</summary>
+
+**`aws_apigatewayv2_api`**: Braucht `name`, `protocol_type = "HTTP"` und einen `cors_configuration`-Block (damit Browser-Requests funktionieren). Erlaubt Origins `["*"]`, Methods `["GET", "POST", "OPTIONS"]`, Headers `["Content-Type"]`.
+
+**`aws_apigatewayv2_integration`**: Verbindet die API mit der Lambda. `integration_type = "AWS_PROXY"`, `integration_uri` ist die `invoke_arn` der Lambda-Funktion, `payload_format_version = "2.0"`.
+
+**`aws_apigatewayv2_route`**: Jede Route braucht `api_id`, einen `route_key` (z.B. `"POST /claims"`) und `target` — das Format ist `"integrations/${aws_apigatewayv2_integration.lambda.id}"`. Legt drei Routen an: `POST /claims`, `GET /claims`, `GET /claims/{id}`.
+
+**`aws_lambda_permission`**: Selbes Muster wie beim S3-Trigger, aber `principal = "apigateway.amazonaws.com"` und `source_arn = "${aws_apigatewayv2_api.claims.execution_arn}/*/*"`.
+
+</details>
+
+```bash
+terraform validate
+terraform plan -target=module.api
+```
+
+---
+
+### Schritt 2.4 – API deployen
 
 **Ziel:** Das gesamte Setup vervollständigen.
 
@@ -462,13 +513,9 @@ Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schrei
 terraform apply
 ```
 
-Schaut kurz in `modules/api/main.tf`: API Gateway v2 (HTTP API), 3 Routen, Lambda-Integration.
-
-Und in `lambda-src/api/handler.py`: Wie werden Routen gematcht? Wie wird die presigned URL generiert?
-
 ---
 
-### Schritt 2.4 – End-to-End testen
+### Schritt 2.5 – End-to-End testen
 
 **Ziel:** Den vollständigen Claim-Flow vom POST bis zum S3-Upload durchspielen.
 
