@@ -4,39 +4,12 @@ data "archive_file" "api_lambda" {
   output_path = "${path.module}/build/api.zip"
 }
 
-resource "aws_iam_role" "lambda" {
-  name = "${var.project}-${var.environment}-api-role"
+# IAM-Rolle wurde vorab vom Admin angelegt (WorkshopParticipant hat kein iam:CreateRole/GetRole).
+# ARN wird direkt konstruiert, um iam:GetRole zu vermeiden.
+data "aws_caller_identity" "current" {}
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "lambda.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
-
-  tags = var.tags
-}
-
-# Basis-Permissions: CloudWatch Logs schreiben
-resource "aws_iam_role_policy_attachment" "basic_execution" {
-  role       = aws_iam_role.lambda.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_iam_role_policy" "s3_presign" {
-  name = "s3-put-presign"
-  role = aws_iam_role.lambda.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["s3:PutObject"]
-      Resource = "${var.bucket_arn}/*"
-    }]
-  })
+locals {
+  role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project}-${var.environment}-api-role"
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
@@ -49,7 +22,7 @@ resource "aws_lambda_function" "api" {
   function_name    = "${var.project}-${var.environment}-claims-api"
   filename         = data.archive_file.api_lambda.output_path
   source_code_hash = data.archive_file.api_lambda.output_base64sha256
-  role             = aws_iam_role.lambda.arn
+  role             = local.role_arn
   handler          = "handler.lambda_handler"
   runtime          = "python3.12"
   timeout          = 15
