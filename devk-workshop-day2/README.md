@@ -399,19 +399,41 @@ Erwartete Ausgabe: `available`
 Lest gemeinsam `modules/processor/main.tf`. Was passiert hier?
 
 1. `data.archive_file` – Source-Code wird gezippt
-2. `aws_iam_role` + Policy – Lambda bekommt Berechtigungen (S3 lesen, RDS erreichen)
-3. `aws_lambda_function` – Python-Funktion, event-getriggert
-4. `aws_s3_bucket_notification` – Bucket ruft Lambda bei jedem Upload auf
+2. `aws_lambda_function` – Python-Funktion, event-getriggert
+3. `aws_lambda_permission` + `aws_s3_bucket_notification` – S3-Trigger (TODO: implementiert ihr selbst)
 
 Schaut auch in `lambda-src/processor/handler.py` – was macht der Code konkret?
 
 ---
 
-### Schritt 2.2 – Processor deployen und testen
+### Schritt 2.2 – S3-Trigger implementieren und deployen
 
-**Ziel:** Die Processor-Lambda deployen und mit einem echten S3-Upload testen.
+**Ziel:** Den S3-Trigger selbst implementieren — zwei Ressourcen, die zusammen den Event-Flow herstellen — und die Processor-Lambda deployen.
+
+Öffnet `modules/processor/main.tf` und implementiert den TODO-Block am Ende.
+
+**Anforderungen:**
+
+| # | Ressource | Was sie tut |
+|---|-----------|-------------|
+| 1 | `aws_lambda_permission` | Erlaubt S3, die Lambda aufzurufen |
+| 2 | `aws_s3_bucket_notification` | Triggert die Lambda bei jedem Upload |
+
+<details>
+<summary>Hinweis – S3-Trigger: zwei Ressourcen, ein Konzept</summary>
+
+AWS trennt Berechtigung und Konfiguration bewusst:
+
+**`aws_lambda_permission`** ist eine IAM-ähnliche Erlaubnis auf Ebene der Lambda-Funktion selbst. Ohne sie würde S3 beim Aufruf ein `Access Denied` bekommen — auch wenn die Bucket-Notification korrekt konfiguriert ist. Relevante Argumente: `action`, `function_name`, `principal`, `source_arn`.
+
+**`aws_s3_bucket_notification`** konfiguriert den Bucket so, dass er bei bestimmten Events aktiv wird. Der innere `lambda_function`-Block braucht `lambda_function_arn` und `events`. Für "jedes neue Objekt" lautet das Event `s3:ObjectCreated:*`.
+
+Wichtig: `aws_s3_bucket_notification` muss ein `depends_on` auf `aws_lambda_permission` haben — sonst versucht Terraform die Notification zu setzen, bevor die Permission existiert.
+
+</details>
 
 ```bash
+terraform validate
 terraform apply -target=module.processor
 ```
 

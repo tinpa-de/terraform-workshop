@@ -46,21 +46,19 @@ resource "aws_lambda_function" "processor" {
   tags       = var.tags
 }
 
-resource "aws_lambda_permission" "s3" {
-  statement_id  = "AllowS3Invoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.processor.function_name
-  principal     = "s3.amazonaws.com"
-  source_arn    = var.bucket_arn
-}
-
-resource "aws_s3_bucket_notification" "trigger" {
-  bucket = var.bucket_id
-
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.processor.arn
-    events              = ["s3:ObjectCreated:*"]
-  }
-
-  depends_on = [aws_lambda_permission.s3]
-}
+# TODO: S3-Trigger implementieren – verbindet den Bucket mit der Lambda.
+# Zwei Ressourcen werden gebraucht, die zusammenarbeiten:
+#
+# Ressource 1: aws_lambda_permission
+#   Erlaubt S3, diese Lambda aufzurufen (ohne diese Permission blockiert AWS den Aufruf).
+#
+# Ressource 2: aws_s3_bucket_notification
+#   Konfiguriert den Bucket so, dass er bei bestimmten Events die Lambda triggert.
+#
+# resource "aws_lambda_permission" "s3" {
+#   ...
+# }
+#
+# resource "aws_s3_bucket_notification" "trigger" {
+#   ...
+# }
