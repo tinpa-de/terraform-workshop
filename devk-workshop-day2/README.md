@@ -142,12 +142,12 @@ Ihr solltet sehen: `Terraform has been successfully initialized!` Ihr seid jetzt
 ```
 modules/
 ├── storage/     ← IHR implementiert main.tf  (Aufgabe Part 1)
-├── database/    ← vorgegeben (lesenswert)
+├── database/    ← IHR implementiert main.tf  (Aufgabe Part 1)
 ├── processor/   ← vorgegeben
 └── api/         ← vorgegeben
 
 envs/dev/
-└── main.tf      ← IHR füllt TODO A aus      (Aufgabe Part 1)
+└── main.tf      ← IHR füllt TODO A + TODO B aus  (Aufgabe Part 1)
 ```
 
 **Euer Workflow für jeden Schritt:**
@@ -292,9 +292,72 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 
 ---
 
-### Schritt 1.3 – Datenbank starten
+### Schritt 1.3 – Datenbank-Modul implementieren
 
-**Ziel:** Die RDS-Instanz deployen.
+**Ziel:** Implementiert `modules/database/main.tf`. Das Modul soll eine PostgreSQL-Datenbank auf RDS anlegen — mit Subnet Group, Security Group (als data source) und der RDS-Instanz selbst.
+
+> **Hinweis:** Die Security Group `devk-dev-rds` (Port 5432) wurde vorab vom Admin angelegt. Ihr referenziert sie per `data`-Block, statt sie selbst zu erstellen — das ist ein wichtiges Terraform-Konzept: bestehende Infrastruktur einbinden, ohne sie zu verwalten.
+
+**Anforderungen:**
+
+| # | Was | Ressource |
+|---|-----|-----------|
+| 1 | DB Subnet Group aus den Default-Subnets | `aws_db_subnet_group` |
+| 2 | Bestehende Security Group referenzieren | `data "aws_security_group"` |
+| 3 | PostgreSQL RDS-Instanz (db.t3.micro, 20 GB) | `aws_db_instance` |
+
+**Wo anfangen:**
+
+1. Öffnet `modules/database/variables.tf` — welche Variablen stehen zur Verfügung?
+2. Öffnet `modules/database/outputs.tf` — was soll das Modul zurückgeben?
+3. Implementiert die drei Ressourcen der Reihe nach
+
+```bash
+terraform validate
+terraform plan -target=module.database
+```
+
+<details>
+<summary>Hinweis – Ressource 1: DB Subnet Group</summary>
+
+`aws_db_subnet_group` braucht einen `name` und `subnet_ids`. RDS benötigt eine Subnet Group, damit AWS weiß, in welchen Availability Zones die Datenbank erreichbar sein soll — mindestens zwei AZs sind Pflicht.
+
+Baut den Namen aus `var.project` und `var.environment`. Die Subnet-IDs kommen aus `var.subnet_ids`.
+
+</details>
+
+<details>
+<summary>Hinweis – Ressource 2: Security Group als data source</summary>
+
+Mit `data "aws_security_group"` referenziert ihr eine bereits existierende Security Group, ohne sie selbst zu verwalten. Das ist der Unterschied zu `resource`: Terraform erstellt nichts, sondern liest nur die ID aus.
+
+Der Block braucht `name` und `vpc_id` zum Auffinden der SG. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `devk-dev-rds`). Die VPC-ID kommt aus `var.vpc_id`.
+
+Referenziert die ID dann so: `data.aws_security_group.rds.id`
+
+</details>
+
+<details>
+<summary>Hinweis – Ressource 3: RDS-Instanz</summary>
+
+`aws_db_instance` hat viele Argumente — für den Workshop sind diese wichtig:
+- `identifier` — eindeutiger Name der Instanz
+- `engine = "postgres"`, `engine_version = "16.6"`
+- `instance_class = "db.t3.micro"`, `allocated_storage = 20`
+- `storage_encrypted = true`
+- `db_name`, `username`, `password` — aus den Variablen
+- `db_subnet_group_name` — Name der Subnet Group (Ressourcenreferenz)
+- `vpc_security_group_ids` — Liste mit der SG-ID aus dem data-Block
+- `publicly_accessible = true` — Workshop-Vereinfachung
+- `skip_final_snapshot = true`, `backup_retention_period = 0`, `deletion_protection = false` — nur für Workshop
+
+</details>
+
+---
+
+### Schritt 1.4 – Datenbank deployen
+
+**Ziel:** Das Datenbank-Modul in `envs/dev/main.tf` einbinden (TODO B) und deployen.
 
 > **Hinweis:** Folgende Ressourcen wurden vorab vom Admin angelegt — Terraform sucht sie per Name, ihr müsst nichts erstellen:
 > - Security Group `devk-dev-rds` (Port 5432, für RDS)
@@ -305,7 +368,7 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 terraform apply -target=module.database
 ```
 
-Das dauert ca. 8–10 Minuten. Nutzt die Zeit, um `modules/database/main.tf` zu lesen.
+Das dauert ca. 8–10 Minuten. Nutzt die Zeit für die Diskussionspunkte unten.
 
 **Überprüfen:**
 

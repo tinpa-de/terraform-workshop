@@ -59,19 +59,21 @@ locals {
 #   tags        = local.tags
 # }
 
-# Datenbank-Modul – vorgegeben. Schaut euch modules/database/variables.tf an:
-# Welche Werte werden für db_name, db_username und db_password übergeben?
-module "database" {
-  source      = "../../modules/database"
-  project     = var.project
-  environment = var.environment
-  vpc_id      = data.aws_vpc.default.id
-  subnet_ids  = data.aws_subnets.default.ids
-  db_name     = "claims"
-  db_username = var.db_username
-  db_password = var.db_password
-  tags        = local.tags
-}
+# TODO B: Datenbank-Modul aufrufen
+# Schaut euch modules/database/variables.tf und modules/database/outputs.tf an.
+# Die DB-Adresse wird später von processor + api gebraucht.
+#
+# module "database" {
+#   source      = "../../modules/database"
+#   project     = var.project
+#   environment = var.environment
+#   vpc_id      = data.aws_vpc.default.id
+#   subnet_ids  = data.aws_subnets.default.ids
+#   db_name     = "claims"
+#   db_username = var.db_username
+#   db_password = var.db_password
+#   tags        = local.tags
+# }
 
 # =============================================================================
 # Part 2: Application – Lambda & API Gateway
