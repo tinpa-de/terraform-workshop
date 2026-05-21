@@ -446,7 +446,7 @@ aws s3 cp /tmp/schaden.jpg \
   s3://$(terraform output -raw s3_bucket)/policies/POL-12345/schaden.jpg
 
 # Lambda-Logs live verfolgen (Strg+C zum Beenden)
-aws logs tail $(terraform output -raw processor_log_group) --follow
+aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-central-1
 ```
 
 Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schreibt einen Eintrag.
@@ -553,7 +553,7 @@ curl -X PUT "${UPLOAD_URL}" \
 **Überprüfen:** Prozessor-Logs checken – wurde das Dokument registriert?
 
 ```bash
-aws logs tail $(terraform output -raw processor_log_group) --follow
+aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-central-1
 ```
 
 ---
