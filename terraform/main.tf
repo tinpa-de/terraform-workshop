@@ -20,7 +20,7 @@ module "static_page_1" {
     aws.frankfurt = aws.frankfurt
   }
 
-  name     = "juli-walkthrough1-workshop-static-page"
+  name     = "NAME-workshop-static-page"
   filepath = "../resources/static-page/index.html"
 }
 
@@ -31,7 +31,7 @@ module "static_page_2" {
     aws.frankfurt = aws.frankfurt
   }
 
-  name     = "juli-walkthrough1-workshop-static-page-2"
+  name     = "NAME-workshop-static-page-2"
   filepath = "../resources/static-page-2/index.html"
 }
 
@@ -42,7 +42,7 @@ module "static_page_3" {
     aws.frankfurt = aws.frankfurt
   }
 
-  name     = "juli-walkthrough1-workshop-static-page-3"
+  name     = "NAME-workshop-static-page-3"
   filepath = "../resources/static-page-3/index.html"
 }
 

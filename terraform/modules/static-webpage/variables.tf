@@ -1,5 +1,5 @@
 variable "name" {
-  default     = "juli-walkthrough1-workshop-static-page"
+  default     = "NAME-workshop-static-page"
   description = "A short identifier for this website. Used to construct a unique bucket name."
   type        = string
 }
