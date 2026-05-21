@@ -1,45 +1,43 @@
+terraform {
+  required_providers {
+    aws = {
+      source                = "hashicorp/aws"
+      configuration_aliases = [aws.frankfurt]
+    }
+  }
+}
+
 resource "aws_s3_bucket" "my_first_s3_bucket" {
-    bucket = "juli-walkthrough1-workshop-static-page"
+    bucket = var.name
 }
 
 resource "aws_s3_object" "my_first_s3_object" {
     bucket = aws_s3_bucket.my_first_s3_bucket.bucket
     key = "index.html"
-    source = "../resources/static-page/index.html"
+    source = var.filepath
     content_type = "text/html"
-    etag = filemd5("../resources/static-page/index.html")
-}
-
-resource "aws_s3_bucket_public_access_block" "public_access_block" {
-  bucket = aws_s3_bucket.my_first_s3_bucket.id
-
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+    etag = filemd5(var.filepath)
 }
 
 resource "aws_s3_bucket_policy" "allow_public_website_access" {
     bucket = aws_s3_bucket.my_first_s3_bucket.id
-    depends_on = [aws_s3_bucket_public_access_block.public_access_block]
+    # depends_on = [aws_s3_bucket_public_access_block.public_access_block]
     policy = jsonencode({
         Version = "2012-10-17"
         Statement = [{
             Effect    = "Allow"
-            Principal = "cloudfront.amazonaws.com"
+            Principal = {
+              Service = "cloudfront.amazonaws.com"
+            }
+            Condition = {
+                StringEquals = {
+                    "AWS:SourceArn" = aws_cloudfront_distribution.s3_distribution.arn
+                }
+                }
             Action    = "s3:GetObject"
-            Resource  = "arn:aws:s3:::juli-walkthrough1-workshop-static-page/*"
+            Resource  = "arn:aws:s3:::${var.name}/*"
         }]
     })
-}
-
-resource "aws_s3_bucket_website_configuration" "bucket_website_configuration" {
-  bucket = aws_s3_bucket.my_first_s3_bucket.id
-
-  index_document {
-    suffix = "index.html"
-  }
-
 }
 
 resource "aws_cloudfront_origin_access_control" "default" {
@@ -92,5 +90,5 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 }
 
 output "website_url" {
-  value = "http://${aws_s3_bucket_website_configuration.bucket_website_configuration.website_endpoint}"
+  value = "https://${aws_cloudfront_distribution.s3_distribution.domain_name}"
 }

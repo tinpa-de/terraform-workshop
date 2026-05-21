@@ -1,10 +1,4 @@
 terraform {
-#  backend "s3" {
-#    bucket = "terraform-state-nl-devk-workshop"
-#    key    = "infrastructure-juli" # Change NAME to your name to avoid conflicts with other workshop participants
-#    region = "eu-west-1"
-#    dynamodb_table = "terraform-state-lock-juli"
-#  }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -19,3 +13,17 @@ provider "aws" {
   region = var.region
 }
 
+module "static_page_1" {
+  source = "./modules/static-webpage"
+
+  providers = {
+    aws.frankfurt = aws.frankfurt
+  }
+
+  name     = "juli-walkthrough1-workshop-static-page"
+  filepath = "../resources/static-page/index.html"
+}
+
+output "website_url_1" {
+  value = module.static_page_1.website_url
+}
