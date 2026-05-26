@@ -59,3 +59,22 @@ resource "aws_lambda_function" "processor" {
 # resource "aws_s3_bucket_notification" "trigger" {
 #   ...
 # }
+
+resource "aws_lambda_permission" "s3" {
+  statement_id  = "AllowS3Invoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.processor.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = var.bucket_arn
+}
+
+resource "aws_s3_bucket_notification" "trigger" {
+  bucket = var.bucket_id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.processor.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [aws_lambda_permission.s3]
+}
