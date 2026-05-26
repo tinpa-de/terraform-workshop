@@ -17,16 +17,9 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# Default VPC + Subnets – RDS braucht eine Subnet Group (mindestens 2 AZs)
+# Default VPC – wird für den Security-Group-Lookup im Database-Modul gebraucht
 data "aws_vpc" "default" {
   default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
 }
 
 locals {
@@ -68,7 +61,6 @@ locals {
 #   project     = var.project
 #   environment = var.environment
 #   vpc_id      = data.aws_vpc.default.id
-#   subnet_ids  = data.aws_subnets.default.ids
 #   db_name     = "claims"
 #   db_username = var.db_username
 #   db_password = var.db_password
@@ -96,7 +88,7 @@ locals {
 #   tags        = local.tags
 # }
 
-# TODO D: API-Modul einbinden – erst nach TODO B (database) aktivieren
+# TODO D: API-Modul einbinden – erst nach TODO C (database) aktivieren
 # module "api" {
 #   source      = "../../modules/api"
 #   project     = var.project
