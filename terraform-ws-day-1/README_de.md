@@ -39,17 +39,18 @@ Hier sind die Kernkonzepte, denen du in diesem Workshop begegnen wirst:
 
 ```
 terraform-workshop/
-├── resources/
-│   ├── static-page/index.html       ← Website-Datei für Aufgabe 1
-│   ├── static-page-2/index.html     ← Website-Datei für Aufgabe 2 (zweite Seite)
-│   └── static-page-3/index.html     ← Website-Datei für Aufgabe 2 (dritte Seite)
-└── terraform/
-    ├── initialize-lock-db/          ← Einmalige Einrichtung: erstellt deine persönliche State-Lock-Tabelle
-    │   ├── main.tf
-    │   ├── variables.tf
-    │   └── default.auto.tfvars      ← Du bearbeitest diese Datei in Setup-Schritt 4
-    ├── main.tf                      ← Du bearbeitest diese Datei in Setup-Schritt 5
-    └── variables.tf
+└── terraform-ws-day-1/
+    ├── resources/
+    │   ├── static-page/index.html       ← Website-Datei für Aufgabe 1
+    │   ├── static-page-2/index.html     ← Website-Datei für Aufgabe 2 (zweite Seite)
+    │   └── static-page-3/index.html     ← Website-Datei für Aufgabe 2 (dritte Seite)
+    └── terraform/
+        ├── initialize-lock-db/          ← Einmalige Einrichtung: erstellt deine persönliche State-Lock-Tabelle
+        │   ├── main.tf
+        │   ├── variables.tf
+        │   └── default.auto.tfvars      ← Du bearbeitest diese Datei in Setup-Schritt 4
+        ├── main.tf                      ← Du bearbeitest diese Datei in Setup-Schritt 5
+        └── variables.tf
 ```
 
 In Aufgabe 1 fügst du neue `.tf`-Dateien in `terraform/` hinzu. In Aufgabe 2 erstellst du den Ordner `terraform/modules/`.

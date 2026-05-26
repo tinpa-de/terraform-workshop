@@ -39,13 +39,14 @@ Here are the core concepts you'll encounter throughout this workshop:
 
 ```
 terraform-workshop/
-├── resources/
-│   ├── static-page/index.html       ← Website file for Task 1
-│   ├── static-page-2/index.html     ← Website file for Task 2 (second site)
-│   └── static-page-3/index.html     ← Website file for Task 2 (third site)
-└── terraform/
-    ├── main.tf                      ← You will edit this in Setup Step 4
-    └── variables.tf
+└── terraform-ws-day-1/
+    ├── resources/
+    │   ├── static-page/index.html       ← Website file for Task 1
+    │   ├── static-page-2/index.html     ← Website file for Task 2 (second site)
+    │   └── static-page-3/index.html     ← Website file for Task 2 (third site)
+    └── terraform/
+        ├── main.tf                      ← You will edit this in Setup Step 4
+        └── variables.tf
 ```
 
 During Task 1 you will add new `.tf` files inside `terraform/`. During Task 2 you will create the `terraform/modules/` folder.
