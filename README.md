@@ -55,7 +55,7 @@ During Task 1 you will add new `.tf` files inside `terraform/`. During Task 2 yo
 
 ## Setup
 
-Work through all three steps in order before starting the tasks. If anything fails, ask for help before moving on.
+Work through all four steps in order before starting the tasks. If anything fails, ask for help before moving on.
 
 ---
 

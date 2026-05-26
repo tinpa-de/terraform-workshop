@@ -45,11 +45,7 @@ terraform-workshop/
     │   ├── static-page-2/index.html     ← Website-Datei für Aufgabe 2 (zweite Seite)
     │   └── static-page-3/index.html     ← Website-Datei für Aufgabe 2 (dritte Seite)
     └── terraform/
-        ├── initialize-lock-db/          ← Einmalige Einrichtung: erstellt deine persönliche State-Lock-Tabelle
-        │   ├── main.tf
-        │   ├── variables.tf
-        │   └── default.auto.tfvars      ← Du bearbeitest diese Datei in Setup-Schritt 4
-        ├── main.tf                      ← Du bearbeitest diese Datei in Setup-Schritt 5
+        ├── main.tf                      ← Du bearbeitest diese Datei in Setup-Schritt 4
         └── variables.tf
 ```
 
@@ -59,7 +55,7 @@ In Aufgabe 1 fügst du neue `.tf`-Dateien in `terraform/` hinzu. In Aufgabe 2 er
 
 ## Setup
 
-Arbeite alle fünf Schritte der Reihe nach durch, bevor du mit den Aufgaben beginnst. Wenn etwas fehlschlägt, bitte um Hilfe, bevor du weitermachst.
+Arbeite alle vier Schritte der Reihe nach durch, bevor du mit den Aufgaben beginnst. Wenn etwas fehlschlägt, bitte um Hilfe, bevor du weitermachst.
 
 ---
 
@@ -167,6 +163,19 @@ aws s3 ls
 ```
 
 Du solltest eine Liste von S3-Buckets sehen. Bei einem Authentifizierungsfehler überprüfe, ob alle drei Umgebungsvariablen korrekt gesetzt sind.
+
+---
+
+### Schritt 4 – Terraform initialisieren
+
+Wechsle in das Verzeichnis `terraform/` und lade die erforderlichen Provider-Plugins herunter:
+
+```bash
+cd terraform
+tf init
+```
+
+Du solltest sehen: `Terraform has been successfully initialized!` Du bist jetzt vollständig eingerichtet und kannst mit den Aufgaben beginnen.
 
 ---
 
