@@ -457,6 +457,25 @@ Wichtig: `aws_s3_bucket_notification` muss ein `depends_on` auf `aws_lambda_perm
 
 </details>
 
+Öffnet danach `envs/dev/main.tf` und kommentiert den TODO-C-Block ein:
+
+```hcl
+module "processor" {
+  source      = "../../modules/processor"
+  project     = var.project
+  environment = var.environment
+  source_dir  = "${path.module}/../../lambda-src/processor"
+  bucket_id   = module.storage.bucket_id
+  bucket_arn  = module.storage.bucket_arn
+  db_host     = module.database.address
+  db_name     = module.database.db_name
+  db_username = var.db_username
+  db_password = var.db_password
+  layers      = [local.psycopg2_layer_arn]
+  tags        = local.tags
+}
+```
+
 ```bash
 terraform validate
 terraform apply -target=module.processor
