@@ -531,7 +531,7 @@ Das Muster ist identisch zum Processor-Modul. Die Unterschiede:
 - `timeout = 15` (kürzer als Processor)
 - Zusätzliche Env-Variable: `BUCKET_NAME = var.bucket_name`
 
-Referenziert `local.role_arn` für die IAM-Rolle (bereits vorgegeben).
+Referenziert `data.aws_iam_role.api.arn` für die IAM-Rolle (bereits vorgegeben).
 
 </details>
 
@@ -553,6 +553,41 @@ terraform validate
 terraform plan -target=module.api
 ```
 
+Wenn der Plan sauber ist: Modul einbinden und Outputs freischalten.
+
+**`envs/dev/main.tf`** – TODO-D-Block auskommentieren:
+
+```hcl
+module "api" {
+  source      = "../../modules/api"
+  project     = var.project
+  environment = var.environment
+  source_dir  = "${path.module}/../../lambda-src/api"
+  bucket_name = module.storage.bucket_name
+  bucket_arn  = module.storage.bucket_arn
+  db_host     = module.database.address
+  db_name     = module.database.db_name
+  db_username = var.db_username
+  db_password = var.db_password
+  layers      = [local.psycopg2_layer_arn]
+  tags        = local.tags
+}
+```
+
+**`envs/dev/outputs.tf`** – beide API-Outputs auskommentieren:
+
+```hcl
+output "api_url" {
+  description = "Base URL der Claims-API"
+  value       = module.api.api_endpoint
+}
+
+output "api_log_group" {
+  description = "CloudWatch Log Group der API-Lambda"
+  value       = module.api.log_group_name
+}
+```
+
 ---
 
 ### Schritt 2.4 – API deployen
@@ -562,6 +597,12 @@ terraform plan -target=module.api
 ```bash
 # Ohne -target – deployed jetzt alles
 terraform apply
+```
+
+Die API-URL ausgeben:
+
+```bash
+terraform output -raw api_url
 ```
 
 ---
