@@ -457,7 +457,7 @@ Wichtig: `aws_s3_bucket_notification` muss ein `depends_on` auf `aws_lambda_perm
 
 </details>
 
-Öffnet danach `envs/dev/main.tf` und kommentiert den TODO-C-Block ein:
+Öffnet danach `envs/dev/main.tf` und kommentiert den TODO-C-Block ein, und in `envs/dev/outputs.tf` den `processor_log_group`-Output:
 
 ```hcl
 module "processor" {
@@ -473,6 +473,13 @@ module "processor" {
   db_password = var.db_password
   layers      = [local.psycopg2_layer_arn]
   tags        = local.tags
+}
+```
+
+```hcl
+output "processor_log_group" {
+  description = "CloudWatch Log Group der Processor-Lambda - zum Debuggen"
+  value       = module.processor.log_group_name
 }
 ```
 
