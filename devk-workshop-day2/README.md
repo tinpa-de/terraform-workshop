@@ -303,15 +303,17 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 
 ### Schritt 1.3 – Datenbank-Modul implementieren
 
-**Ziel:** Implementiert `modules/database/main.tf`. Das Modul soll eine PostgreSQL-Datenbank auf RDS anlegen — mit Subnet Group, Security Group (als data source) und der RDS-Instanz selbst.
+**Ziel:** Implementiert `modules/database/main.tf`. Das Modul soll eine PostgreSQL-Datenbank auf RDS anlegen — mit Subnet Group, Security Group (beide als data source) und der RDS-Instanz selbst.
 
-> **Hinweis:** Die Security Group `devk-dev-rds` (Port 5432) wurde vorab vom Admin angelegt. Ihr referenziert sie per `data`-Block, statt sie selbst zu erstellen — das ist ein wichtiges Terraform-Konzept: bestehende Infrastruktur einbinden, ohne sie zu verwalten.
+> **Hinweis:** Folgende Ressourcen wurden vorab vom Admin angelegt — ihr referenziert sie per `data`-Block, statt sie selbst zu erstellen. Das ist ein wichtiges Terraform-Konzept: bestehende Infrastruktur einbinden, ohne sie zu verwalten:
+> - DB Subnet Group `devk-dev-claims` (überspannt alle Default-Subnets)
+> - Security Group `devk-dev-rds` (Port 5432)
 
 **Anforderungen:**
 
 | # | Was | Ressource |
 |---|-----|-----------|
-| 1 | DB Subnet Group aus den Default-Subnets | `aws_db_subnet_group` |
+| 1 | Bestehende DB Subnet Group referenzieren | `data "aws_db_subnet_group"` |
 | 2 | Bestehende Security Group referenzieren | `data "aws_security_group"` |
 | 3 | PostgreSQL RDS-Instanz (db.t3.micro, 20 GB) | `aws_db_instance` |
 
@@ -327,11 +329,13 @@ terraform plan -target=module.database
 ```
 
 <details>
-<summary>Hinweis – Ressource 1: DB Subnet Group</summary>
+<summary>Hinweis – Ressource 1: DB Subnet Group als data source</summary>
 
-`aws_db_subnet_group` braucht einen `name` und `subnet_ids`. RDS benötigt eine Subnet Group, damit AWS weiß, in welchen Availability Zones die Datenbank erreichbar sein soll — mindestens zwei AZs sind Pflicht.
+Mit `data "aws_db_subnet_group"` referenziert ihr eine bereits existierende Subnet Group — Terraform erstellt nichts, sondern liest nur den Namen aus. Das ist dasselbe Prinzip wie bei der Security Group.
 
-Baut den Namen aus `var.project` und `var.environment`. Die Subnet-IDs kommen aus `var.subnet_ids`.
+Der Block braucht nur `name` zum Auffinden. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `devk-dev-claims`).
+
+Referenziert den Namen dann so: `data.aws_db_subnet_group.claims.name`
 
 </details>
 
@@ -355,7 +359,7 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 - `instance_class = "db.t3.micro"`, `allocated_storage = 20`
 - `storage_encrypted = true`
 - `db_name`, `username`, `password` — aus den Variablen
-- `db_subnet_group_name` — Name der Subnet Group (Ressourcenreferenz)
+- `db_subnet_group_name` — Name der Subnet Group (data-Referenz)
 - `vpc_security_group_ids` — Liste mit der SG-ID aus dem data-Block
 - `publicly_accessible = true` — Workshop-Vereinfachung
 - `skip_final_snapshot = true`, `backup_retention_period = 0`, `deletion_protection = false` — nur für Workshop
@@ -369,6 +373,7 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 **Ziel:** Das Datenbank-Modul in `envs/dev/main.tf` einbinden (TODO B) und deployen.
 
 > **Hinweis:** Folgende Ressourcen wurden vorab vom Admin angelegt — Terraform sucht sie per Name, ihr müsst nichts erstellen:
+> - DB Subnet Group `devk-dev-claims` (für RDS)
 > - Security Group `devk-dev-rds` (Port 5432, für RDS)
 > - IAM-Rolle `devk-dev-processor-role` (für die Processor-Lambda)
 > - IAM-Rolle `devk-dev-api-role` (für die API-Lambda)

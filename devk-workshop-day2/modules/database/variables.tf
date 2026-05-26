@@ -13,11 +13,6 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "subnet_ids" {
-  description = "Subnets für die DB Subnet Group (mindestens 2 in unterschiedlichen AZs)"
-  type        = list(string)
-}
-
 variable "db_name" {
   description = "Name der initial angelegten Datenbank"
   type        = string
