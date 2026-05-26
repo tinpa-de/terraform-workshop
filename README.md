@@ -121,49 +121,39 @@ tf version
 
 ---
 
-### Step 3 – Log in to AWS via SSO
+### Step 3 – Log in to AWS and configure credentials
 
-This workshop runs on a shared AWS account. You authenticate using **AWS Single Sign-On (SSO)** — a central login portal that grants you temporary credentials.
+This workshop runs on a shared AWS account. You authenticate using an **IAM user** with an access key.
 
-**Configure your SSO profile (first time only):**
+**Log in to the AWS Console:**
 
-```bash
-aws configure sso --profile workshop
-```
+Open https://console.aws.amazon.com in your browser and sign in with the IAM username and password you were given.
 
-When prompted for the **SSO start URL**, enter:
+**Create an access key:**
 
-```
-https://nl.awsapps.com/start
-```
+1. In the top-right corner, click your username → **Security credentials**.
+2. Scroll down to **Access keys** and click **Create access key**.
+3. Select **Command Line Interface (CLI)** as the use case, acknowledge the recommendation, and click **Next**.
+4. Click **Create access key**.
+5. **Copy both the Access Key ID and the Secret Access Key now** — the secret is only shown once.
 
-When prompted for the **SSO region**, enter:
-
-```
-eu-west-1
-```
-
-Accept the defaults for any other prompts. A browser tab will open for you to approve the login. Once you see the confirmation, return to your terminal.
-
-**Tell the AWS CLI which profile to use:**
+**Save the credentials as environment variables:**
 
 macOS / Linux:
 ```bash
-export AWS_PROFILE=workshop
+export AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY
+export AWS_DEFAULT_REGION=eu-west-1
 ```
 
 Windows (PowerShell):
 ```powershell
-$env:AWS_PROFILE = "workshop"
+$env:AWS_ACCESS_KEY_ID = "YOUR_ACCESS_KEY_ID"
+$env:AWS_SECRET_ACCESS_KEY = "YOUR_SECRET_ACCESS_KEY"
+$env:AWS_DEFAULT_REGION = "eu-west-1"
 ```
 
-> This variable is only set for the current terminal session. You will need to set it again every time you open a new terminal window. If you encounter authentication errors later, this is the first thing to check.
-
-**If your session expires at any point:**
-
-```bash
-aws sso login --profile workshop
-```
+> These variables are only set for the current terminal session. You will need to set them again every time you open a new terminal window. If you encounter authentication errors later, this is the first thing to check.
 
 **Verify your access:**
 
