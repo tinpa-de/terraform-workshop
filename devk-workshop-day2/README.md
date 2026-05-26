@@ -113,14 +113,21 @@ aws ec2 create-default-vpc
 
 ### Schritt 3 – Datenbankpasswort setzen
 
-`terraform.tfvars` liegt bereits bereit, enthält aber einen Platzhalter als Passwort. Öffnet die Datei und setzt ein eigenes Passwort. Die Datei ist in `.gitignore` — sie wird nie ins Repository eingecheckt.
+`terraform.tfvars` enthält eure persönlichen Eingabewerte für Terraform — darunter das Passwort für die RDS-Datenbank, die ihr in Part 1 anlegt.
 
+Kopiert die Beispieldatei und erstellt daraus eure `terraform.tfvars`:
+
+macOS / Linux:
 ```bash
-cd envs/dev
-cat terraform.tfvars
+cp envs/dev/terraform.tfvars.example envs/dev/terraform.tfvars
 ```
 
-Öffnet `terraform.tfvars` in eurem Editor und ersetzt `BitteHierEinStarkesPasswortSetzen!` durch ein eigenes Passwort.
+Windows (PowerShell):
+```powershell
+Copy-Item envs/dev/terraform.tfvars.example envs/dev/terraform.tfvars
+```
+
+Öffnet `envs/dev/terraform.tfvars` in eurem Editor und ersetzt `BitteHierEinStarkesPasswortSetzen!` durch ein eigenes Passwort. Die Datei ist in `.gitignore` — sie wird nie ins Repository eingecheckt.
 
 **Überprüfen:** Der Platzhalter ist durch ein eigenes Passwort ersetzt.
 
