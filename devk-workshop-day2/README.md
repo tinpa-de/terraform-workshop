@@ -141,13 +141,14 @@ Ihr solltet sehen: `Terraform has been successfully initialized!` Ihr seid jetzt
 
 ```
 modules/
-├── storage/     ← IHR implementiert main.tf  (Aufgabe Part 1)
-├── database/    ← IHR implementiert main.tf  (Aufgabe Part 1)
-├── processor/   ← vorgegeben
-└── api/         ← vorgegeben
+├── storage/     ← IHR implementiert main.tf       (Aufgabe Part 1)
+├── database/    ← IHR implementiert main.tf       (Aufgabe Part 1)
+├── processor/   ← vorgegeben, S3-Trigger als TODO (Aufgabe Part 2)
+└── api/         ← IHR implementiert main.tf       (Aufgabe Part 2)
 
 envs/dev/
-└── main.tf      ← IHR füllt TODO A + TODO B aus  (Aufgabe Part 1)
+├── main.tf      ← IHR füllt TODO A–D schrittweise aus
+└── outputs.tf   ← Outputs werden schrittweise einkommentiert
 ```
 
 **Euer Workflow für jeden Schritt:**

@@ -80,32 +80,34 @@ locals {
 # (vorgegeben – beobachten und verstehen)
 # =============================================================================
 
-module "processor" {
-  source      = "../../modules/processor"
-  project     = var.project
-  environment = var.environment
-  source_dir  = "${path.module}/../../lambda-src/processor"
-  bucket_id   = module.storage.bucket_id
-  bucket_arn  = module.storage.bucket_arn
-  db_host     = module.database.address
-  db_name     = module.database.db_name
-  db_username = var.db_username
-  db_password = var.db_password
-  layers      = [local.psycopg2_layer_arn]
-  tags        = local.tags
-}
+# TODO C: Processor-Modul einbinden – erst nach TODO B (database) aktivieren
+# module "processor" {
+#   source      = "../../modules/processor"
+#   project     = var.project
+#   environment = var.environment
+#   source_dir  = "${path.module}/../../lambda-src/processor"
+#   bucket_id   = module.storage.bucket_id
+#   bucket_arn  = module.storage.bucket_arn
+#   db_host     = module.database.address
+#   db_name     = module.database.db_name
+#   db_username = var.db_username
+#   db_password = var.db_password
+#   layers      = [local.psycopg2_layer_arn]
+#   tags        = local.tags
+# }
 
-module "api" {
-  source      = "../../modules/api"
-  project     = var.project
-  environment = var.environment
-  source_dir  = "${path.module}/../../lambda-src/api"
-  bucket_name = module.storage.bucket_name
-  bucket_arn  = module.storage.bucket_arn
-  db_host     = module.database.address
-  db_name     = module.database.db_name
-  db_username = var.db_username
-  db_password = var.db_password
-  layers      = [local.psycopg2_layer_arn]
-  tags        = local.tags
-}
+# TODO D: API-Modul einbinden – erst nach TODO B (database) aktivieren
+# module "api" {
+#   source      = "../../modules/api"
+#   project     = var.project
+#   environment = var.environment
+#   source_dir  = "${path.module}/../../lambda-src/api"
+#   bucket_name = module.storage.bucket_name
+#   bucket_arn  = module.storage.bucket_arn
+#   db_host     = module.database.address
+#   db_name     = module.database.db_name
+#   db_username = var.db_username
+#   db_password = var.db_password
+#   layers      = [local.psycopg2_layer_arn]
+#   tags        = local.tags
+# }
