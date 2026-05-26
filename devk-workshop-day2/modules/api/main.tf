@@ -4,18 +4,16 @@ data "archive_file" "api_lambda" {
   output_path = "${path.module}/build/api.zip"
 }
 
-# IAM-Rolle wurde vorab vom Admin angelegt (WorkshopParticipant hat kein iam:CreateRole/GetRole).
-# ARN wird direkt konstruiert, um iam:GetRole zu vermeiden.
-data "aws_caller_identity" "current" {}
-
-locals {
-  role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project}-${var.environment}-api-role"
+# IAM-Rolle wurde vorab vom Admin angelegt – hier wird sie per Name nachgeschlagen.
+data "aws_iam_role" "api" {
+  name = "${var.project}-${var.environment}-api-role"
 }
 
 # TODO 1: Lambda-Funktion provisionieren
 # Das Muster kennt ihr aus dem Processor-Modul – schaut dort nach.
 # Unterschiede: function_name endet auf "claims-api", timeout = 15, memory_size = 256.
 # Zusätzliche Env-Variable: BUCKET_NAME = var.bucket_name
+# IAM-Rolle: data.aws_iam_role.api.arn
 #
 # resource "aws_cloudwatch_log_group" "lambda" { ... }
 # resource "aws_lambda_function" "api" { ... }

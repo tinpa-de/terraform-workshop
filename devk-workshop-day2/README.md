@@ -410,11 +410,22 @@ Erwartete Ausgabe: `available`
 
 **Ziel:** Verstehen, wie Lambda per Terraform provisioniert wird und wie S3-Events funktionieren.
 
-Lest gemeinsam `modules/processor/main.tf`. Was passiert hier?
+Lest gemeinsam `modules/processor/main.tf`. Die Datei hat fünf Teile:
 
-1. `data.archive_file` – Source-Code wird gezippt
-2. `aws_lambda_function` – Python-Funktion, event-getriggert
-3. `aws_lambda_permission` + `aws_s3_bucket_notification` – S3-Trigger (TODO: implementiert ihr selbst)
+**1. `data "archive_file"`** — Source-Code zippen
+Terraform zippt den Python-Code on-the-fly direkt aus dem Quellverzeichnis. `source_code_hash` sorgt dafür, dass Lambda bei jeder Code-Änderung automatisch neu deployed wird — ohne diesen Hash würde Terraform die Änderung nicht erkennen.
+
+**2. `data "aws_iam_role"`** — IAM-Rolle nachschlagen
+Die Rolle wurde vorab vom Admin angelegt (Teilnehmer haben keine `iam:CreateRole`-Berechtigung). Terraform liest sie hier per Name aus — ein typisches Muster, um bestehende Infrastruktur einzubinden ohne sie selbst zu verwalten.
+
+**3. `aws_cloudwatch_log_group`** — Logs explizit verwalten
+Lambda legt automatisch eine Log Group an — aber dann hat Terraform keine Kontrolle darüber. Durch explizite Verwaltung lässt sich die Retention auf 7 Tage setzen und die Log Group wird bei `terraform destroy` sauber gelöscht.
+
+**4. `aws_lambda_function`** — die Funktion selbst
+Verknüpft alle vorherigen Teile: gezippter Code, IAM-Rolle, Umgebungsvariablen für DB und S3. `depends_on` stellt sicher, dass die Log Group zuerst existiert, bevor Lambda deployed wird.
+
+**5. TODO: `aws_lambda_permission` + `aws_s3_bucket_notification`** — S3-Trigger
+Diese beiden Ressourcen sind noch nicht implementiert — das ist eure Aufgabe in Schritt 2.2.
 
 Schaut auch in `lambda-src/processor/handler.py` – was macht der Code konkret?
 
