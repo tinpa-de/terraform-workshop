@@ -44,11 +44,7 @@ terraform-workshop/
 │   ├── static-page-2/index.html     ← Website file for Task 2 (second site)
 │   └── static-page-3/index.html     ← Website file for Task 2 (third site)
 └── terraform/
-    ├── initialize-lock-db/          ← One-time setup: creates your personal state lock table
-    │   ├── main.tf
-    │   ├── variables.tf
-    │   └── default.auto.tfvars      ← You will edit this in Setup Step 4
-    ├── main.tf                      ← You will edit this in Setup Step 5
+    ├── main.tf                      ← You will edit this in Setup Step 4
     └── variables.tf
 ```
 
@@ -58,7 +54,7 @@ During Task 1 you will add new `.tf` files inside `terraform/`. During Task 2 yo
 
 ## Setup
 
-Work through all five steps in order before starting the tasks. If anything fails, ask for help before moving on.
+Work through all three steps in order before starting the tasks. If anything fails, ask for help before moving on.
 
 ---
 
@@ -169,69 +165,16 @@ You should see a list of S3 buckets. If you see an authentication error, double-
 
 ---
 
-### Step 4 – Create your personal state lock table
+### Step 4 – Initialize Terraform
 
-#### Why does Terraform need remote state and a lock?
+Navigate to the `terraform/` directory and download the required provider plugins:
 
-By default Terraform saves its state file (`terraform.tfstate`) on your local machine. This works fine for solo use, but in a shared environment multiple people could run `tf apply` at the same time and overwrite each other's state.
+```bash
+cd terraform
+tf init
+```
 
-To prevent this, we store the state file in a central **S3 bucket** (already created for this workshop). On top of that, we use a **DynamoDB table as a lock**: when someone is running `tf apply`, they acquire the lock, and anyone else who tries to apply at the same time is made to wait.
-
-Because you share the S3 bucket with other workshop participants, each person creates their **own DynamoDB lock table** so your locks don't interfere with each other.
-
-**Steps:**
-
-1. Open `terraform/initialize-lock-db/default.auto.tfvars` in your text editor.
-2. Replace `-NAME` with your first name or initials. Use **lowercase letters and hyphens only** — no spaces or special characters.
-   ```
-   dynamodb_table_name = "terraform-state-lock-NAME"
-   ```
-3. Navigate to the `initialize-lock-db` directory in your terminal:
-   ```bash
-   cd terraform/initialize-lock-db
-   ```
-4. Run the commands below. The first downloads the required provider plugins; the second creates your DynamoDB table.
-   ```bash
-   tf init
-   tf plan
-   tf apply
-   ```
-5. Terraform will print a summary of what it plans to create and then ask: `Do you want to perform these actions?` — type `yes` and press Enter.
-
-You should see: `Apply complete! Resources: 1 added, 0 changed, 0 destroyed.`
-
----
-
-### Step 5 – Configure your personal backend
-
-Now you need to tell the main Terraform project *where* to store your state file. Everyone stores their state in the same shared S3 bucket, but each person uses a unique `key` — think of it as the file path inside the bucket — so your state doesn't overwrite anyone else's.
-
-1. Open `terraform/main.tf` in your editor.
-2. Find the `backend "s3"` block near the top of the file, inside the `terraform {}` block:
-   ```hcl
-   backend "s3" {
-     bucket = "terraform-state-nl-devk"
-     key    = "infrastructure-NAME"   # ← change this line
-   }
-   ```
-3. Replace `NAME` in the `key` value with your name — use the same value you used in Step 4.
-   ```hcl
-   key = "infrastructure-NAME"
-   ```
-4. While you have this file open, also add your DynamoDB table name so that state locking is active:
-   ```hcl
-   dynamodb_table = "terraform-state-lock-NAME"   # same name as Step 4
-   ```
-5. Navigate to the `terraform/` directory:
-   ```bash
-   cd ..
-   ```
-6. Initialize the backend:
-   ```bash
-   tf init
-   ```
-
-Terraform will connect to the S3 bucket and confirm the backend is ready. You are now fully set up and ready to start the tasks.
+You should see: `Terraform has been successfully initialized!` You are now fully set up and ready to start the tasks.
 
 ---
 

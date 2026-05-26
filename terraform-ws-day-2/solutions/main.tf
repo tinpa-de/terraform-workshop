@@ -1,3 +1,6 @@
+# Musterlösung: envs/dev/main.tf (vollständig ausgefüllt)
+# Diese Datei zeigt, wie die Module korrekt verdrahtet werden.
+
 terraform {
   required_version = ">= 1.6"
 
@@ -12,12 +15,10 @@ provider "aws" {
   region = var.region
 }
 
-# Eindeutiger Suffix für globalen S3-Namespace
 resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# Default VPC + Subnets – RDS braucht eine Subnet Group (mindestens 2 AZs)
 data "aws_vpc" "default" {
   default = true
 }
@@ -37,20 +38,9 @@ locals {
     Workshop    = "DEVK-2026"
   }
 
-  # Öffentlicher Lambda Layer für psycopg2 (Postgres-Client für Python).
-  # Quelle: https://github.com/keithrozario/Klayers (Account 770693421928)
-  # Aktuelle ARNs für eu-central-1: https://api.klayers.cloud/api/v2/p3.12/layers/latest/eu-central-1/html
   psycopg2_layer_arn = "arn:aws:lambda:${var.region}:770693421928:layer:Klayers-p312-psycopg2-binary:1"
 }
 
-# =============================================================================
-# Part 1: Foundation – Storage & Database
-# =============================================================================
-
-# TODO A: Storage-Modul aufrufen
-# Schaut euch modules/storage/outputs.tf an – welche Outputs gibt das Modul?
-# Der Bucket-Name wird später von processor + api gebraucht.
-#
 module "storage" {
   source      = "../../modules/storage"
   project     = var.project
@@ -59,10 +49,6 @@ module "storage" {
   tags        = local.tags
 }
 
-# TODO B: Database-Modul vervollständigen
-# Schaut euch modules/database/variables.tf an.
-# Welche Werte müssen für db_name, db_username und db_password übergeben werden?
-#
 module "database" {
   source      = "../../modules/database"
   project     = var.project
@@ -74,11 +60,6 @@ module "database" {
   db_password = var.db_password
   tags        = local.tags
 }
-
-# =============================================================================
-# Part 2: Application – Lambda & API Gateway
-# (vorgegeben – beobachten und verstehen)
-# =============================================================================
 
 module "processor" {
   source      = "../../modules/processor"
