@@ -1,56 +1,6 @@
-resource "aws_db_subnet_group" "claims" {
-  name       = "${var.project}-${var.environment}-claims"
-  subnet_ids = var.subnet_ids
-  tags       = var.tags
-}
-
-# WORKSHOP-VEREINFACHUNG: Erlaubt Zugriff auf Port 5432 von überall.
-# In Produktion: Lambda in VPC + Security Group Referenzen statt CIDR.
-resource "aws_security_group" "rds" {
-  name        = "${var.project}-${var.environment}-rds"
-  description = "Allow PostgreSQL access (workshop: open to internet)"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "WORKSHOP ONLY – in Produktion niemals offen lassen"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = var.tags
-}
-
-resource "aws_db_instance" "claims" {
-  identifier        = "${var.project}-${var.environment}-claims"
-  engine            = "postgres"
-  engine_version    = "16.3"
-  instance_class    = "db.t3.micro"
-  allocated_storage = 20
-  storage_encrypted = true
-
-  db_name  = var.db_name
-  username = var.db_username
-  password = var.db_password
-
-  db_subnet_group_name   = aws_db_subnet_group.claims.name
-  vpc_security_group_ids = [aws_security_group.rds.id]
-
-  # WORKSHOP-VEREINFACHUNG: Lambda muss nicht in VPC laufen.
-  # In Produktion: false + Lambda in VPC + private Subnets + NAT Gateway.
-  publicly_accessible = true
-
-  skip_final_snapshot     = true  # NUR FÜR WORKSHOP – in Produktion: false
-  backup_retention_period = 0     # NUR FÜR WORKSHOP – in Produktion: >= 7
-  deletion_protection     = false # NUR FÜR WORKSHOP
-
-  tags = var.tags
-}
+# TODO: Implementiert das Datenbank-Modul.
+# Schaut euch variables.tf und outputs.tf an, bevor ihr anfangt.
+#
+# Ressource 1: data "aws_db_subnet_group" (Hinweis: nicht resource, sondern data! – wie bei der Security Group)
+# Ressource 2: data "aws_security_group" (Hinweis: nicht resource, sondern data!)
+# Ressource 3: aws_db_instance

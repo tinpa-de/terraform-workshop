@@ -44,11 +44,7 @@ terraform-workshop/
 │   ├── static-page-2/index.html     ← Website file for Task 2 (second site)
 │   └── static-page-3/index.html     ← Website file for Task 2 (third site)
 └── terraform/
-    ├── initialize-lock-db/          ← One-time setup: creates your personal state lock table
-    │   ├── main.tf
-    │   ├── variables.tf
-    │   └── default.auto.tfvars      ← You will edit this in Setup Step 4
-    ├── main.tf                      ← You will edit this in Setup Step 5
+    ├── main.tf                      ← You will edit this in Setup Step 4
     └── variables.tf
 ```
 
@@ -58,7 +54,7 @@ During Task 1 you will add new `.tf` files inside `terraform/`. During Task 2 yo
 
 ## Setup
 
-Work through all five steps in order before starting the tasks. If anything fails, ask for help before moving on.
+Work through all three steps in order before starting the tasks. If anything fails, ask for help before moving on.
 
 ---
 
@@ -166,6 +162,19 @@ aws s3 ls
 ```
 
 You should see a list of S3 buckets. If you see an authentication error, double-check that all three environment variables are set correctly.
+
+---
+
+### Step 4 – Initialize Terraform
+
+Navigate to the `terraform/` directory and download the required provider plugins:
+
+```bash
+cd terraform
+tf init
+```
+
+You should see: `Terraform has been successfully initialized!` You are now fully set up and ready to start the tasks.
 
 ---
 

@@ -3,8 +3,8 @@
 Heute baut ihr das Backend eines Schadensmeldungs-Portals. Versicherungsnehmer können Schäden online melden, Dokumente hochladen und den Status abrufen.
 
 Am Ende des Tages habt ihr:
-- Ein Storage-Modul selbst in Terraform implementiert
-- Eine PostgreSQL-Datenbank auf RDS deployed
+- Ein Storage-Modul selbst in Terraform implementiert und in S3 deployed
+- Eine PostgreSQL-Datenbank in Terraform implementiert und auf RDS deployed
 - Zwei Lambda-Funktionen über Terraform provisioniert
 - Ein API Gateway mit drei REST-Endpunkten in Betrieb genommen
 
@@ -34,7 +34,6 @@ Heute wendet ihr dieselben Konzepte wie gestern an – mit mehr Services und ein
 |-------|-------|
 | Einfache S3-Ressourcen | S3 mit Versionierung, Verschlüsselung, Lifecycle |
 | Ein eigenes Modul gebaut | Modul selbst implementieren + vorgefertigte Module nutzen |
-| Remote State eingerichtet | Remote State weiter nutzen (gleicher Bucket, neuer Key) |
 | Provider, Variablen, Outputs | Alles davon – plus IAM, Lambda, RDS, API Gateway |
 
 ---
@@ -47,60 +46,102 @@ Heute wendet ihr dieselben Konzepte wie gestern an – mit mehr Services und ein
 | **RDS** | Verwaltete relationale Datenbank | `aws_db_instance` |
 | **Lambda** | Code ohne Server ausführen, event-getriggert | `aws_lambda_function` |
 | **API Gateway** | HTTP-API-Endpunkte verwalten | `aws_apigatewayv2_api` |
-| **Security Group** | Firewall-Regeln für AWS-Ressourcen | `aws_security_group` |
+| **Security Group** | Firewall-Regeln für AWS-Ressourcen | `data "aws_security_group"` (vorab vom Admin erstellt) |
 | **IAM Role** | Berechtigungen für AWS-Services | `aws_iam_role` |
-
----
-
-## Voraussetzungen
-
-Vor dem ersten `terraform init` bitte prüfen:
-
-```bash
-# 1. Terraform-Version
-terraform version   # sollte >= 1.6 sein
-
-# 2. AWS-Credentials (Session aus Tag 1 erneuern falls abgelaufen)
-aws sso login --profile workshop
-export AWS_PROFILE=workshop
-aws sts get-caller-identity   # muss eine Account-ID zurückgeben
-
-# 3. Region prüfen
-aws configure get region   # sollte eu-central-1 sein
-
-# 4. Default-VPC (RDS braucht eine Subnet Group)
-aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
-  --query 'Vpcs[0].VpcId' --output text
-# Wenn "None" zurückkommt: aws ec2 create-default-vpc
-```
-
-> **Wichtig:** Am Ende des Workshops bitte `terraform destroy` ausführen – RDS verursacht sonst laufende Kosten.
 
 ---
 
 ## Setup
 
+Arbeitet alle vier Schritte der Reihe nach durch. Wenn etwas nicht klappt, fragt bevor ihr weitermacht.
+
+> **Wichtig:** Am Ende des Workshops `terraform destroy` ausführen – RDS läuft sonst weiter und verursacht Kosten.
+
+---
+
+### Schritt 1 – AWS-Zugangsdaten setzen
+
+Umgebungsvariablen aus Tag 1 sind nach dem Schließen des Terminals weg. Setzt sie in jedem neuen Terminalfenster neu — euren Access Key habt ihr bereits aus Tag 1.
+
+macOS / Linux:
 ```bash
-cd envs/dev
+export AWS_ACCESS_KEY_ID=EURE_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=EUER_SECRET_ACCESS_KEY
+export AWS_DEFAULT_REGION=eu-central-1
 ```
 
-Öffnet `backend.tf` und tragt euren persönlichen Namen ein – denselben, den ihr in Tag 1 für die DynamoDB-Tabelle verwendet habt:
-
-```hcl
-dynamodb_table = "terraform-state-lock-NAME"   # ← euer Name aus Tag 1
+Windows (PowerShell):
+```powershell
+$env:AWS_ACCESS_KEY_ID = "EURE_ACCESS_KEY_ID"
+$env:AWS_SECRET_ACCESS_KEY = "EUER_SECRET_ACCESS_KEY"
+$env:AWS_DEFAULT_REGION = "eu-central-1"
 ```
 
-Dann:
+> Wenn ihr später unerklärliche Authentifizierungsfehler bekommt: das ist meistens der erste Ort, den ihr prüfen solltet.
+
+Falls ihr euren Access Key nicht mehr habt: AWS Console öffnen → rechts oben auf euren Benutzernamen → **Security credentials** → **Create access key**.
+
+**Überprüfen:**
 
 ```bash
-# tfvars liegt bereits bereit – Passwort anpassen:
-cat terraform.tfvars
+aws sts get-caller-identity
+```
 
-# Remote State aus Tag 1 weiterverwenden.
-# Bucket-Namen anpassen, falls euer Bucket einen anderen Namen hat:
-# terraform init -backend-config="bucket=terraform-state-nl-devk-XXXX"
+Der Befehl muss eine Account-ID zurückgeben. Eine Fehlermeldung bedeutet, die Zugangsdaten sind nicht korrekt gesetzt.
+
+---
+
+### Schritt 2 – Default-VPC prüfen
+
+RDS benötigt eine Subnet Group, die mindestens zwei Availability Zones abdeckt. Wir nutzen dafür den Default-VPC, der in jedem AWS-Account vorhanden sein sollte.
+
+**Überprüfen:**
+
+```bash
+aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
+  --query 'Vpcs[0].VpcId' --output text \
+  --region eu-central-1
+```
+
+Ihr solltet eine VPC-ID sehen, z.B. `vpc-0a1b2c3d`. Falls die Ausgabe `None` lautet:
+
+```bash
+aws ec2 create-default-vpc
+```
+
+---
+
+### Schritt 3 – Datenbankpasswort setzen
+
+`terraform.tfvars` enthält eure persönlichen Eingabewerte für Terraform — darunter das Passwort für die RDS-Datenbank, die ihr in Part 1 anlegt.
+
+Kopiert die Beispieldatei und erstellt daraus eure `terraform.tfvars`:
+
+macOS / Linux:
+```bash
+cp envs/dev/terraform.tfvars.example envs/dev/terraform.tfvars
+```
+
+Windows (PowerShell):
+```powershell
+Copy-Item envs/dev/terraform.tfvars.example envs/dev/terraform.tfvars
+```
+
+Öffnet `envs/dev/terraform.tfvars` in eurem Editor und ersetzt `BitteHierEinStarkesPasswortSetzen!` durch ein eigenes Passwort. Die Datei ist in `.gitignore` — sie wird nie ins Repository eingecheckt.
+
+**Überprüfen:** Der Platzhalter ist durch ein eigenes Passwort ersetzt.
+
+---
+
+### Schritt 4 – Terraform initialisieren
+
+Lädt die Provider-Plugins herunter und registriert die Module:
+
+```bash
 terraform init
 ```
+
+Ihr solltet sehen: `Terraform has been successfully initialized!` Ihr seid jetzt bereit, mit den Aufgaben zu beginnen.
 
 ---
 
@@ -108,13 +149,14 @@ terraform init
 
 ```
 modules/
-├── storage/     ← IHR implementiert main.tf  (Aufgabe Part 1)
-├── database/    ← vorgegeben (lesenswert)
-├── processor/   ← vorgegeben
-└── api/         ← vorgegeben
+├── storage/     ← IHR implementiert main.tf       (Aufgabe Part 1)
+├── database/    ← IHR implementiert main.tf       (Aufgabe Part 1)
+├── processor/   ← vorgegeben, S3-Trigger als TODO (Aufgabe Part 2)
+└── api/         ← IHR implementiert main.tf       (Aufgabe Part 2)
 
 envs/dev/
-└── main.tf      ← IHR füllt TODO A aus      (Aufgabe Part 1)
+├── main.tf      ← IHR füllt TODO A–D schrittweise aus
+└── outputs.tf   ← Outputs werden schrittweise einkommentiert
 ```
 
 **Euer Workflow für jeden Schritt:**
@@ -131,9 +173,25 @@ Führt `terraform validate` und `terraform plan` nach jeder neuen Ressource aus.
 
 ### Schritt 1.1 – Storage-Modul implementieren
 
-**Ziel:** Implementiert `modules/storage/main.tf`. Das Modul soll einen S3-Bucket mit Versionierung, serverseitiger Verschlüsselung und Public-Access-Block anlegen.
+**Ziel:** Implementiert `modules/storage/main.tf`. Das Modul soll einen S3-Bucket mit Versionierung, serverseitiger Verschlüsselung und Public-Access-Block anlegen — so wie es die Anforderungen für ein Schadensmeldungs-Portal erfordern.
 
-Lest zuerst `modules/storage/EXERCISE.md` – dort stehen alle Anforderungen. Lest außerdem `modules/storage/variables.tf` und `modules/storage/outputs.tf`, damit ihr wisst, welche Inputs und Outputs das Modul hat.
+Gestern habt ihr bereits S3-Ressourcen gebaut. Heute geht es einen Schritt weiter: Versionierung, Verschlüsselung und Lifecycle.
+
+**Anforderungen:**
+
+| # | Was | Warum |
+|---|-----|-------|
+| 1 | S3-Bucket mit Name `{project}-{environment}-claims-{suffix}` | Eindeutiger Name im globalen S3-Namespace |
+| 2 | Versionierung aktivieren | Dokumente dürfen nicht verloren gehen |
+| 3 | Verschlüsselung mit AES256 | Daten at-rest verschlüsseln (DSGVO) |
+| 4 | Public Access Block (alle 4 Flags = true) | Bucket darf nie öffentlich zugänglich sein |
+| 5 | Lifecycle-Regel (Bonus) | Alte Versionen nach 90 Tagen löschen |
+
+**Wo anfangen:**
+
+1. Öffnet `modules/storage/variables.tf` — was steht euch zur Verfügung?
+2. Öffnet `modules/storage/outputs.tf` — was soll das Modul nach außen geben?
+3. Implementiert `modules/storage/main.tf` Ressource für Ressource
 
 ```bash
 # Nach jeder neuen Ressource testen:
@@ -146,62 +204,53 @@ terraform plan -target=module.storage
 <details>
 <summary>Hinweis – Ressource 1: S3-Bucket</summary>
 
-```hcl
-resource "aws_s3_bucket" "claims" {
-  bucket = "${var.project}-${var.environment}-claims-${var.suffix}"
-  tags   = var.tags
-}
-```
+`aws_s3_bucket` braucht ein `bucket` Argument für den Namen. Bucket-Namen müssen global eindeutig sein — baut ihn aus den Variablen zusammen, die euch zur Verfügung stehen: `var.project`, `var.environment` und `var.suffix`. Terraform-Stringinterpolation funktioniert so: `"${var.project}-weiterer-text"`. Setzt außerdem `tags = var.tags`.
 
-Der Bucket-Name muss global eindeutig sein. Der Suffix aus `random_id` sorgt dafür.
+Schaut in `variables.tf`, welche Variablen das Modul bekommt — ihr müsst nichts hart codieren.
 
 </details>
 
 <details>
 <summary>Hinweis – Ressource 2: Versionierung</summary>
 
-```hcl
-resource "aws_s3_bucket_versioning" "claims" {
-  bucket = aws_s3_bucket.claims.id
+`aws_s3_bucket_versioning` braucht ein `bucket` Argument — referenziert euren Bucket mit `aws_s3_bucket.claims.id` (kein hartcodierter Name, sondern eine Ressourcenreferenz). Das ist dasselbe Muster wie in Tag 1.
 
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-```
+Innerhalb des Blocks kommt ein `versioning_configuration` Block mit einem `status` Argument. Welchen Wert muss `status` haben, damit Versionierung aktiv ist?
 
 </details>
 
 <details>
 <summary>Hinweis – Ressource 3: Verschlüsselung</summary>
 
-```hcl
-resource "aws_s3_bucket_server_side_encryption_configuration" "claims" {
-  bucket = aws_s3_bucket.claims.id
+`aws_s3_bucket_server_side_encryption_configuration` hat eine verschachtelte Struktur — das ist bei AWS-Ressourcen in Terraform häufig so. Der Aufbau: ein `rule` Block, darin ein `apply_server_side_encryption_by_default` Block, darin das Argument `sse_algorithm`.
 
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-```
+Der Wert für serverseitige Verschlüsselung ohne eigene Schlüssel lautet `"AES256"`.
 
 </details>
 
 <details>
 <summary>Hinweis – Ressource 4: Public Access Block</summary>
 
-```hcl
-resource "aws_s3_bucket_public_access_block" "claims" {
-  bucket = aws_s3_bucket.claims.id
+`aws_s3_bucket_public_access_block` hat vier boolean-Argumente, die jeweils einen anderen Aspekt des öffentlichen Zugriffs steuern:
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-```
+- `block_public_acls`
+- `block_public_policy`
+- `ignore_public_acls`
+- `restrict_public_buckets`
+
+Alle vier sollen `true` sein. Das ist die sichere Standardkonfiguration für einen Bucket, der nie öffentlich zugänglich sein soll — im Gegensatz zu Tag 1, wo ihr Public Access bewusst aufgemacht habt.
+
+</details>
+
+<details>
+<summary>Hinweis – Ressource 5 (Bonus): Lifecycle-Regel</summary>
+
+`aws_s3_bucket_lifecycle_configuration` braucht einen `rule` Block mit drei Teilen:
+- `id` — ein beliebiger Name für die Regel
+- `status = "Enabled"` — damit die Regel aktiv ist
+- einen `noncurrent_version_expiration` Block mit dem Argument `noncurrent_days`
+
+`noncurrent_version_expiration` wirkt nur auf ältere Versionen eines Objekts — die jeweils aktuelle Version bleibt unberührt. Das Argument `noncurrent_days` legt fest, nach wie vielen Tagen alte Versionen automatisch gelöscht werden.
 
 </details>
 
@@ -210,6 +259,7 @@ resource "aws_s3_bucket_public_access_block" "claims" {
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration
 
 ---
 
@@ -217,7 +267,16 @@ resource "aws_s3_bucket_public_access_block" "claims" {
 
 **Ziel:** Das Storage-Modul in `envs/dev/main.tf` einbinden (TODO A) und deployen.
 
-Öffnet `envs/dev/main.tf` und schaut euch die TODO-Kommentare an. Schaut euch außerdem `modules/storage/outputs.tf` an – welche Outputs gibt das Modul zurück? Diese werden später von `processor` und `api` benötigt.
+Öffnet `envs/dev/main.tf` — dort findet ihr den auskommentierten TODO-A-Block. Kommentiert ihn ein und schaut, welche Argumente übergeben werden. Schaut auch in `modules/storage/outputs.tf`: welche Werte gibt das Modul zurück? Diese werden später von `processor` und `api` benötigt.
+
+<details>
+<summary>Hinweis – Modul aufrufen</summary>
+
+Ein `module` Block in Terraform funktioniert wie ein Funktionsaufruf: `source` gibt den Pfad zum Modul an, die übrigen Argumente entsprechen den `variable`-Deklarationen in `modules/storage/variables.tf`. Schaut, welche Variablen das Modul erwartet — und welche Werte aus dem aufrufenden Kontext (`var.*`, `local.*`, `resource.*`) ihr übergeben könnt.
+
+Nach dem Einkommentieren: `terraform init` ist nicht nötig, da das Modul bereits bekannt ist. Direkt mit `terraform validate` starten.
+
+</details>
 
 ```bash
 terraform apply -target=module.storage
@@ -242,15 +301,100 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 
 ---
 
-### Schritt 1.3 – Datenbank starten
+### Schritt 1.3 – Datenbank-Modul implementieren
 
-**Ziel:** Die RDS-Instanz deployen.
+**Ziel:** Implementiert `modules/database/main.tf`. Das Modul soll eine PostgreSQL-Datenbank auf RDS anlegen — mit Subnet Group, Security Group (beide als data source) und der RDS-Instanz selbst.
+
+> **Hinweis:** Folgende Ressourcen wurden vorab vom Admin angelegt — ihr referenziert sie per `data`-Block, statt sie selbst zu erstellen. Das ist ein wichtiges Terraform-Konzept: bestehende Infrastruktur einbinden, ohne sie zu verwalten:
+> - DB Subnet Group `devk-dev-claims` (überspannt alle Default-Subnets)
+> - Security Group `devk-dev-rds` (Port 5432)
+
+**Anforderungen:**
+
+| # | Was | Ressource |
+|---|-----|-----------|
+| 1 | Bestehende DB Subnet Group referenzieren | `data "aws_db_subnet_group"` |
+| 2 | Bestehende Security Group referenzieren | `data "aws_security_group"` |
+| 3 | PostgreSQL RDS-Instanz (db.t3.micro, 20 GB) | `aws_db_instance` |
+
+**Wo anfangen:**
+
+1. Öffnet `modules/database/variables.tf` — welche Variablen stehen zur Verfügung?
+2. Öffnet `modules/database/outputs.tf` — was soll das Modul zurückgeben?
+3. Implementiert die drei Ressourcen der Reihe nach
+
+```bash
+terraform validate
+terraform plan -target=module.database
+```
+
+<details>
+<summary>Hinweis – Ressource 1: DB Subnet Group als data source</summary>
+
+Mit `data "aws_db_subnet_group"` referenziert ihr eine bereits existierende Subnet Group — Terraform erstellt nichts, sondern liest nur den Namen aus. Das ist dasselbe Prinzip wie bei der Security Group.
+
+Der Block braucht nur `name` zum Auffinden. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `devk-dev-claims`).
+
+Referenziert den Namen dann so: `data.aws_db_subnet_group.claims.name`
+
+</details>
+
+<details>
+<summary>Hinweis – Ressource 2: Security Group als data source</summary>
+
+Mit `data "aws_security_group"` referenziert ihr eine bereits existierende Security Group, ohne sie selbst zu verwalten. Das ist der Unterschied zu `resource`: Terraform erstellt nichts, sondern liest nur die ID aus.
+
+Der Block braucht `name` und `vpc_id` zum Auffinden der SG. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `devk-dev-rds`). Die VPC-ID kommt aus `var.vpc_id`.
+
+Referenziert die ID dann so: `data.aws_security_group.rds.id`
+
+</details>
+
+<details>
+<summary>Hinweis – Ressource 3: RDS-Instanz</summary>
+
+`aws_db_instance` hat viele Argumente — für den Workshop sind diese wichtig:
+- `identifier` — eindeutiger Name der Instanz
+- `engine = "postgres"`, `engine_version = "16.6"`
+- `instance_class = "db.t3.micro"`, `allocated_storage = 20`
+- `storage_encrypted = true`
+- `db_name`, `username`, `password` — aus den Variablen
+- `db_subnet_group_name` — Name der Subnet Group (data-Referenz)
+- `vpc_security_group_ids` — Liste mit der SG-ID aus dem data-Block
+- `publicly_accessible = true` — Workshop-Vereinfachung
+- `skip_final_snapshot = true`, `backup_retention_period = 0`, `deletion_protection = false` — nur für Workshop
+
+</details>
+
+---
+
+### Schritt 1.4 – Datenbank deployen
+
+**Ziel:** Das Datenbank-Modul in `envs/dev/main.tf` einbinden (TODO B) und deployen.
+
+> **Hinweis:** Folgende Ressourcen wurden vorab vom Admin angelegt — Terraform sucht sie per Name, ihr müsst nichts erstellen:
+> - DB Subnet Group `devk-dev-claims` (für RDS)
+> - Security Group `devk-dev-rds` (Port 5432, für RDS)
+> - IAM-Rolle `devk-dev-processor-role` (für die Processor-Lambda)
+> - IAM-Rolle `devk-dev-api-role` (für die API-Lambda)
 
 ```bash
 terraform apply -target=module.database
 ```
 
-Das dauert ca. 8–10 Minuten. Nutzt die Zeit, um `modules/database/main.tf` zu lesen.
+Das dauert ca. 8–10 Minuten. Nutzt die Zeit für die Diskussionspunkte unten.
+
+**Überprüfen:**
+
+```bash
+aws rds describe-db-instances \
+  --db-instance-identifier devk-dev-claims \
+  --query "DBInstances[0].DBInstanceStatus" \
+  --output text \
+  --region eu-central-1
+```
+
+Erwartete Ausgabe: `available`
 
 **Diskussionspunkte während der Wartezeit:**
 - Warum `skip_final_snapshot = true`? (Wann ist das gefährlich?)
@@ -266,22 +410,81 @@ Das dauert ca. 8–10 Minuten. Nutzt die Zeit, um `modules/database/main.tf` zu 
 
 **Ziel:** Verstehen, wie Lambda per Terraform provisioniert wird und wie S3-Events funktionieren.
 
-Lest gemeinsam `modules/processor/main.tf`. Was passiert hier?
+Lest gemeinsam `modules/processor/main.tf`. Die Datei hat fünf Teile:
 
-1. `data.archive_file` – Source-Code wird gezippt
-2. `aws_iam_role` + Policy – Lambda bekommt Berechtigungen (S3 lesen, RDS erreichen)
-3. `aws_lambda_function` – Python-Funktion, event-getriggert
-4. `aws_s3_bucket_notification` – Bucket ruft Lambda bei jedem Upload auf
+**1. `data "archive_file"`** — Source-Code zippen
+Terraform zippt den Python-Code on-the-fly direkt aus dem Quellverzeichnis. `source_code_hash` sorgt dafür, dass Lambda bei jeder Code-Änderung automatisch neu deployed wird — ohne diesen Hash würde Terraform die Änderung nicht erkennen.
+
+**2. `data "aws_iam_role"`** — IAM-Rolle nachschlagen
+Die Rolle wurde vorab vom Admin angelegt (Teilnehmer haben keine `iam:CreateRole`-Berechtigung). Terraform liest sie hier per Name aus — ein typisches Muster, um bestehende Infrastruktur einzubinden ohne sie selbst zu verwalten.
+
+**3. `aws_cloudwatch_log_group`** — Logs explizit verwalten
+Lambda legt automatisch eine Log Group an — aber dann hat Terraform keine Kontrolle darüber. Durch explizite Verwaltung lässt sich die Retention auf 7 Tage setzen und die Log Group wird bei `terraform destroy` sauber gelöscht.
+
+**4. `aws_lambda_function`** — die Funktion selbst
+Verknüpft alle vorherigen Teile: gezippter Code, IAM-Rolle, Umgebungsvariablen für DB und S3. `depends_on` stellt sicher, dass die Log Group zuerst existiert, bevor Lambda deployed wird.
+
+**5. TODO: `aws_lambda_permission` + `aws_s3_bucket_notification`** — S3-Trigger
+Diese beiden Ressourcen sind noch nicht implementiert — das ist eure Aufgabe in Schritt 2.2.
 
 Schaut auch in `lambda-src/processor/handler.py` – was macht der Code konkret?
 
 ---
 
-### Schritt 2.2 – Processor deployen und testen
+### Schritt 2.2 – S3-Trigger implementieren und deployen
 
-**Ziel:** Die Processor-Lambda deployen und mit einem echten S3-Upload testen.
+**Ziel:** Den S3-Trigger selbst implementieren — zwei Ressourcen, die zusammen den Event-Flow herstellen — und die Processor-Lambda deployen.
+
+Öffnet `modules/processor/main.tf` und implementiert den TODO-Block am Ende.
+
+**Anforderungen:**
+
+| # | Ressource | Was sie tut |
+|---|-----------|-------------|
+| 1 | `aws_lambda_permission` | Erlaubt S3, die Lambda aufzurufen |
+| 2 | `aws_s3_bucket_notification` | Triggert die Lambda bei jedem Upload |
+
+<details>
+<summary>Hinweis – S3-Trigger: zwei Ressourcen, ein Konzept</summary>
+
+AWS trennt Berechtigung und Konfiguration bewusst:
+
+**`aws_lambda_permission`** ist eine IAM-ähnliche Erlaubnis auf Ebene der Lambda-Funktion selbst. Ohne sie würde S3 beim Aufruf ein `Access Denied` bekommen — auch wenn die Bucket-Notification korrekt konfiguriert ist. Relevante Argumente: `action`, `function_name`, `principal`, `source_arn`.
+
+**`aws_s3_bucket_notification`** konfiguriert den Bucket so, dass er bei bestimmten Events aktiv wird. Der innere `lambda_function`-Block braucht `lambda_function_arn` und `events`. Für "jedes neue Objekt" lautet das Event `s3:ObjectCreated:*`.
+
+Wichtig: `aws_s3_bucket_notification` muss ein `depends_on` auf `aws_lambda_permission` haben — sonst versucht Terraform die Notification zu setzen, bevor die Permission existiert.
+
+</details>
+
+Öffnet danach `envs/dev/main.tf` und kommentiert den TODO-C-Block ein, und in `envs/dev/outputs.tf` den `processor_log_group`-Output:
+
+```hcl
+module "processor" {
+  source      = "../../modules/processor"
+  project     = var.project
+  environment = var.environment
+  source_dir  = "${path.module}/../../lambda-src/processor"
+  bucket_id   = module.storage.bucket_id
+  bucket_arn  = module.storage.bucket_arn
+  db_host     = module.database.address
+  db_name     = module.database.db_name
+  db_username = var.db_username
+  db_password = var.db_password
+  layers      = [local.psycopg2_layer_arn]
+  tags        = local.tags
+}
+```
+
+```hcl
+output "processor_log_group" {
+  description = "CloudWatch Log Group der Processor-Lambda - zum Debuggen"
+  value       = module.processor.log_group_name
+}
+```
 
 ```bash
+terraform validate
 terraform apply -target=module.processor
 ```
 
@@ -294,14 +497,100 @@ aws s3 cp /tmp/schaden.jpg \
   s3://$(terraform output -raw s3_bucket)/policies/POL-12345/schaden.jpg
 
 # Lambda-Logs live verfolgen (Strg+C zum Beenden)
-aws logs tail $(terraform output -raw processor_log_group) --follow
+aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-central-1
 ```
 
 Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schreibt einen Eintrag.
 
 ---
 
-### Schritt 2.3 – API deployen
+### Schritt 2.3 – API-Modul implementieren
+
+**Ziel:** Das API-Modul selbst implementieren — Lambda-Funktion und API Gateway.
+
+Öffnet `modules/api/main.tf`. Zwei TODO-Blöcke warten auf euch.
+
+**Anforderungen:**
+
+| # | Was | Ressource |
+|---|-----|-----------|
+| 1 | CloudWatch Log Group | `aws_cloudwatch_log_group` |
+| 2 | Lambda-Funktion | `aws_lambda_function` |
+| 3 | HTTP API | `aws_apigatewayv2_api` |
+| 4 | Lambda-Integration | `aws_apigatewayv2_integration` |
+| 5 | Drei Routen | `aws_apigatewayv2_route` (×3) |
+| 6 | Permission für API Gateway | `aws_lambda_permission` |
+
+Schaut auch in `lambda-src/api/handler.py` — wie werden Routen gematcht, wie wird die Presigned URL erzeugt?
+
+<details>
+<summary>Hinweis – TODO 1: Lambda-Funktion</summary>
+
+Das Muster ist identisch zum Processor-Modul. Die Unterschiede:
+- `function_name` endet auf `"claims-api"`
+- `timeout = 15` (kürzer als Processor)
+- Zusätzliche Env-Variable: `BUCKET_NAME = var.bucket_name`
+
+Referenziert `data.aws_iam_role.api.arn` für die IAM-Rolle (bereits vorgegeben).
+
+</details>
+
+<details>
+<summary>Hinweis – TODO 2: API Gateway</summary>
+
+**`aws_apigatewayv2_api`**: Braucht `name`, `protocol_type = "HTTP"` und einen `cors_configuration`-Block (damit Browser-Requests funktionieren). Erlaubt Origins `["*"]`, Methods `["GET", "POST", "OPTIONS"]`, Headers `["Content-Type"]`.
+
+**`aws_apigatewayv2_integration`**: Verbindet die API mit der Lambda. `integration_type = "AWS_PROXY"`, `integration_uri` ist die `invoke_arn` der Lambda-Funktion, `payload_format_version = "2.0"`.
+
+**`aws_apigatewayv2_route`**: Jede Route braucht `api_id`, einen `route_key` (z.B. `"POST /claims"`) und `target` — das Format ist `"integrations/${aws_apigatewayv2_integration.lambda.id}"`. Legt drei Routen an: `POST /claims`, `GET /claims`, `GET /claims/{id}`.
+
+**`aws_lambda_permission`**: Selbes Muster wie beim S3-Trigger, aber `principal = "apigateway.amazonaws.com"` und `source_arn = "${aws_apigatewayv2_api.claims.execution_arn}/*/*"`.
+
+</details>
+
+```bash
+terraform validate
+terraform plan -target=module.api
+```
+
+Wenn der Plan sauber ist: Modul einbinden und Outputs freischalten.
+
+**`envs/dev/main.tf`** – TODO-D-Block auskommentieren:
+
+```hcl
+module "api" {
+  source      = "../../modules/api"
+  project     = var.project
+  environment = var.environment
+  source_dir  = "${path.module}/../../lambda-src/api"
+  bucket_name = module.storage.bucket_name
+  bucket_arn  = module.storage.bucket_arn
+  db_host     = module.database.address
+  db_name     = module.database.db_name
+  db_username = var.db_username
+  db_password = var.db_password
+  layers      = [local.psycopg2_layer_arn]
+  tags        = local.tags
+}
+```
+
+**`envs/dev/outputs.tf`** – beide API-Outputs auskommentieren:
+
+```hcl
+output "api_url" {
+  description = "Base URL der Claims-API"
+  value       = module.api.api_endpoint
+}
+
+output "api_log_group" {
+  description = "CloudWatch Log Group der API-Lambda"
+  value       = module.api.log_group_name
+}
+```
+
+---
+
+### Schritt 2.4 – API deployen
 
 **Ziel:** Das gesamte Setup vervollständigen.
 
@@ -310,13 +599,15 @@ Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schrei
 terraform apply
 ```
 
-Schaut kurz in `modules/api/main.tf`: API Gateway v2 (HTTP API), 3 Routen, Lambda-Integration.
+Die API-URL ausgeben:
 
-Und in `lambda-src/api/handler.py`: Wie werden Routen gematcht? Wie wird die presigned URL generiert?
+```bash
+terraform output -raw api_url
+```
 
 ---
 
-### Schritt 2.4 – End-to-End testen
+### Schritt 2.5 – End-to-End testen
 
 **Ziel:** Den vollständigen Claim-Flow vom POST bis zum S3-Upload durchspielen.
 
@@ -354,7 +645,7 @@ curl -X PUT "${UPLOAD_URL}" \
 **Überprüfen:** Prozessor-Logs checken – wurde das Dokument registriert?
 
 ```bash
-aws logs tail $(terraform output -raw processor_log_group) --follow
+aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-central-1
 ```
 
 ---
