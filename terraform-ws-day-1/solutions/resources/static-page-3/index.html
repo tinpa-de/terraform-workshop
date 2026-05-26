@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terraform Workshop — Page 3</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0f0a14;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #e6edf3;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #particles-js {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #f78166, #ffa657);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: #ffa657;
+      opacity: 0.7;
+      max-width: 500px;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      border: 1px solid #bd561d;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: #ffa657;
+      background: rgba(189, 86, 29, 0.15);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="particles-js"></div>
+
+  <div class="content">
+    <h1>Three for Three. You're on Fire.</h1>
+    <p>Either you really know what you're doing, or you got very lucky three times in a row. Either way — we're proud of you.</p>
+    <span class="badge">Certified Cloud Clicker — issued by this workshop</span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    particlesJS('particles-js', {
+      particles: {
+        number: { value: 50, density: { enable: true, value_area: 800 } },
+        color: { value: ['#f78166', '#ffa657', '#ffcf7d'] },
+        shape: { type: 'star' },
+        opacity: { value: 0.8, random: true },
+        size: { value: 6, random: true },
+        line_linked: { enable: false },
+        move: {
+          enable: true, speed: 2.5, direction: 'top',
+          random: true, straight: false, out_mode: 'out', bounce: false
+        }
+      },
+      interactivity: {
+        detect_on: 'canvas',
+        events: { onhover: { enable: true, mode: 'bubble' }, onclick: { enable: true, mode: 'repulse' }, resize: true },
+        modes: { bubble: { distance: 180, size: 14, duration: 2, opacity: 1 }, repulse: { distance: 180 } }
+      },
+      retina_detect: true
+    });
+  </script>
+</body>
+</html>
