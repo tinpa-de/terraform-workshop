@@ -161,7 +161,7 @@ $env:AWS_DEFAULT_REGION = "eu-west-1"
 aws s3 ls
 ```
 
-You should see a list of S3 buckets. An authentication error means your session has expired — run the login command above to refresh it.
+You should see a list of S3 buckets. If you see an authentication error, double-check that all three environment variables are set correctly.
 
 ---
 
