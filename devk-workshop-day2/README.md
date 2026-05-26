@@ -3,8 +3,8 @@
 Heute baut ihr das Backend eines Schadensmeldungs-Portals. Versicherungsnehmer können Schäden online melden, Dokumente hochladen und den Status abrufen.
 
 Am Ende des Tages habt ihr:
-- Ein Storage-Modul selbst in Terraform implementiert
-- Eine PostgreSQL-Datenbank auf RDS deployed
+- Ein Storage-Modul selbst in Terraform implementiert und in S3 deployed
+- Eine PostgreSQL-Datenbank in Terraform implementiert und auf RDS deployed
 - Zwei Lambda-Funktionen über Terraform provisioniert
 - Ein API Gateway mit drei REST-Endpunkten in Betrieb genommen
 
@@ -34,7 +34,6 @@ Heute wendet ihr dieselben Konzepte wie gestern an – mit mehr Services und ein
 |-------|-------|
 | Einfache S3-Ressourcen | S3 mit Versionierung, Verschlüsselung, Lifecycle |
 | Ein eigenes Modul gebaut | Modul selbst implementieren + vorgefertigte Module nutzen |
-| Local State genutzt | Local State weiter nutzen |
 | Provider, Variablen, Outputs | Alles davon – plus IAM, Lambda, RDS, API Gateway |
 
 ---
@@ -60,25 +59,27 @@ Arbeitet alle vier Schritte der Reihe nach durch. Wenn etwas nicht klappt, fragt
 
 ---
 
-### Schritt 1 – AWS-Session erneuern
+### Schritt 1 – AWS-Zugangsdaten setzen
 
-SSO-Sessions aus Tag 1 laufen nach einigen Stunden ab. Erneuert die Session und setzt das Profil — die `AWS_PROFILE`-Variable muss in jedem neuen Terminalfenster neu gesetzt werden.
-
-```bash
-aws sso login --profile workshop
-```
+Umgebungsvariablen aus Tag 1 sind nach dem Schließen des Terminals weg. Setzt sie in jedem neuen Terminalfenster neu — euren Access Key habt ihr bereits aus Tag 1.
 
 macOS / Linux:
 ```bash
-export AWS_PROFILE=workshop
+export AWS_ACCESS_KEY_ID=EURE_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=EUER_SECRET_ACCESS_KEY
+export AWS_DEFAULT_REGION=eu-central-1
 ```
 
 Windows (PowerShell):
 ```powershell
-$env:AWS_PROFILE = "workshop"
+$env:AWS_ACCESS_KEY_ID = "EURE_ACCESS_KEY_ID"
+$env:AWS_SECRET_ACCESS_KEY = "EUER_SECRET_ACCESS_KEY"
+$env:AWS_DEFAULT_REGION = "eu-central-1"
 ```
 
 > Wenn ihr später unerklärliche Authentifizierungsfehler bekommt: das ist meistens der erste Ort, den ihr prüfen solltet.
+
+Falls ihr euren Access Key nicht mehr habt: AWS Console öffnen → rechts oben auf euren Benutzernamen → **Security credentials** → **Create access key**.
 
 **Überprüfen:**
 
@@ -86,7 +87,7 @@ $env:AWS_PROFILE = "workshop"
 aws sts get-caller-identity
 ```
 
-Der Befehl muss eine Account-ID zurückgeben. Eine Fehlermeldung bedeutet, die Session ist noch nicht aktiv.
+Der Befehl muss eine Account-ID zurückgeben. Eine Fehlermeldung bedeutet, die Zugangsdaten sind nicht korrekt gesetzt.
 
 ---
 
