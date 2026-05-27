@@ -46,8 +46,6 @@ Heute wendet ihr dieselben Konzepte wie gestern an – mit mehr Services und ein
 | **RDS** | Verwaltete relationale Datenbank | `aws_db_instance` |
 | **Lambda** | Code ohne Server ausführen, event-getriggert | `aws_lambda_function` |
 | **API Gateway** | HTTP-API-Endpunkte verwalten | `aws_apigatewayv2_api` |
-| **Security Group** | Firewall-Regeln für AWS-Ressourcen | `data "aws_security_group"` (vorab vom Admin erstellt) |
-| **IAM Role** | Berechtigungen für AWS-Services | `aws_iam_role` |
 
 ---
 
@@ -135,9 +133,10 @@ Copy-Item envs/dev/terraform.tfvars.example envs/dev/terraform.tfvars
 
 ### Schritt 4 – Terraform initialisieren
 
-Lädt die Provider-Plugins herunter und registriert die Module:
+Wechselt in das Verzeichnis `envs/dev/` und lädt die Provider-Plugins herunter und registriert die Module:
 
 ```bash
+cd terraform-ws-day-2/envs/dev
 terraform init
 ```
 
@@ -162,10 +161,10 @@ envs/dev/
 **Euer Workflow für jeden Schritt:**
 
 ```
-.tf-Datei schreiben  →  terraform validate  →  terraform plan  →  terraform apply
+.tf-Datei schreiben  →  terraform plan  →  terraform apply
 ```
 
-Führt `terraform validate` und `terraform plan` nach jeder neuen Ressource aus. So seht ihr Fehler früh und versteht, was Terraform vorhat.
+Führt `terraform plan` nach jeder neuen Ressource aus. So seht ihr Fehler früh und versteht, was Terraform vorhat.
 
 ---
 
@@ -195,7 +194,6 @@ Gestern habt ihr bereits S3-Ressourcen gebaut. Heute geht es einen Schritt weite
 
 ```bash
 # Nach jeder neuen Ressource testen:
-terraform validate
 terraform plan -target=module.storage
 ```
 
@@ -274,7 +272,7 @@ Alle vier sollen `true` sein. Das ist die sichere Standardkonfiguration für ein
 
 Ein `module` Block in Terraform funktioniert wie ein Funktionsaufruf: `source` gibt den Pfad zum Modul an, die übrigen Argumente entsprechen den `variable`-Deklarationen in `modules/storage/variables.tf`. Schaut, welche Variablen das Modul erwartet — und welche Werte aus dem aufrufenden Kontext (`var.*`, `local.*`, `resource.*`) ihr übergeben könnt.
 
-Nach dem Einkommentieren: `terraform init` ist nicht nötig, da das Modul bereits bekannt ist. Direkt mit `terraform validate` starten.
+Nach dem Einkommentieren: `terraform init` ist nicht nötig, da das Modul bereits bekannt ist.
 
 </details>
 
@@ -324,7 +322,6 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 3. Implementiert die drei Ressourcen der Reihe nach
 
 ```bash
-terraform validate
 terraform plan -target=module.database
 ```
 
@@ -365,6 +362,11 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 - `skip_final_snapshot = true`, `backup_retention_period = 0`, `deletion_protection = false` — nur für Workshop
 
 </details>
+
+**Terraform-Dokumentation:**
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/db_subnet_group
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance
 
 ---
 
@@ -484,7 +486,6 @@ output "processor_log_group" {
 ```
 
 ```bash
-terraform validate
 terraform apply -target=module.processor
 ```
 
@@ -501,6 +502,10 @@ aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-
 ```
 
 Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schreibt einen Eintrag.
+
+**Terraform-Dokumentation:**
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_notification
 
 ---
 
@@ -549,7 +554,6 @@ Referenziert `data.aws_iam_role.api.arn` für die IAM-Rolle (bereits vorgegeben)
 </details>
 
 ```bash
-terraform validate
 terraform plan -target=module.api
 ```
 
@@ -587,6 +591,14 @@ output "api_log_group" {
   value       = module.api.log_group_name
 }
 ```
+
+**Terraform-Dokumentation:**
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_integration
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_route
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
 
 ---
 
