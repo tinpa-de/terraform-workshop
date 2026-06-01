@@ -11,13 +11,13 @@ data "aws_iam_role" "processor" {
 
 # CloudWatch Log Group explizit verwalten (statt implizit von Lambda) -> Retention setzbar
 resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.project}-${var.environment}-claims-processor"
+  name              = "/aws/lambda/${var.project}-${var.environment}-claims-processor-VORNAME"
   retention_in_days = 7
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "processor" {
-  function_name    = "${var.project}-${var.environment}-claims-processor"
+  function_name    = "${var.project}-${var.environment}-claims-processor-VORNAME"
   filename         = data.archive_file.lambda.output_path
   source_code_hash = data.archive_file.lambda.output_base64sha256
   role             = data.aws_iam_role.processor.arn

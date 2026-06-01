@@ -50,13 +50,13 @@ resource "aws_apigatewayv2_stage" "default" {
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.project}-${var.environment}-claims-api"
+  name              = "/aws/lambda/${var.project}-${var.environment}-claims-api-VORNAME"
   retention_in_days = 7
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "api" {
-  function_name    = "${var.project}-${var.environment}-claims-api"
+  function_name    = "${var.project}-${var.environment}-claims-api-VORNAME"
   filename         = data.archive_file.api_lambda.output_path
   source_code_hash = data.archive_file.api_lambda.output_base64sha256
   role             = data.aws_iam_role.api.arn
@@ -86,7 +86,7 @@ resource "aws_lambda_function" "api" {
 # --- API Gateway v2 (HTTP API) ---
 
 resource "aws_apigatewayv2_api" "claims" {
-  name          = "${var.project}-${var.environment}-claims-api"
+  name          = "${var.project}-${var.environment}-claims-api-VORNAME"
   protocol_type = "HTTP"
   description   = "DEVK Claims Intake API"
 

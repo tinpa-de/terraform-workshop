@@ -13,7 +13,7 @@ data "aws_security_group" "rds" {
 }
 
 resource "aws_db_instance" "claims" {
-  identifier        = "${var.project}-${var.environment}-claims"
+  identifier        = "${var.project}-${var.environment}-claims-VORNAME"
   engine            = "postgres"
   engine_version    = "16.6"
   instance_class    = "db.t3.micro"

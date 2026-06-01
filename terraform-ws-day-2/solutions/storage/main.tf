@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "claims" {
-  bucket = "${var.project}-${var.environment}-claims-${var.suffix}"
+  bucket = "${var.project}-${var.environment}-claims-VORNAME"
   tags   = var.tags
 }
 

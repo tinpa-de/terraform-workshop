@@ -4,17 +4,11 @@ terraform {
   required_providers {
     aws     = { source = "hashicorp/aws", version = "~> 6.0" }
     archive = { source = "hashicorp/archive", version = "~> 2.0" }
-    random  = { source = "hashicorp/random", version = "~> 3.0" }
   }
 }
 
 provider "aws" {
   region = var.region
-}
-
-# Eindeutiger Suffix für globalen S3-Namespace
-resource "random_id" "suffix" {
-  byte_length = 4
 }
 
 # Default VPC – wird für den Security-Group-Lookup im Database-Modul gebraucht
@@ -48,7 +42,6 @@ locals {
 #   source      = "../../modules/storage"
 #   project     = var.project
 #   environment = var.environment
-#   suffix      = random_id.suffix.hex
 #   tags        = local.tags
 # }
 

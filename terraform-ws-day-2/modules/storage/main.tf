@@ -7,7 +7,7 @@
 # Eure Aufgabe: Alle Ressourcen in dieser Datei implementieren.
 #
 # Anforderungen:
-#   1. S3-Bucket mit dem Namen: "${var.project}-${var.environment}-claims-${var.suffix}"
+#   1. S3-Bucket mit dem Namen: "${var.project}-${var.environment}-claims-VORNAME"
 #   2. Versionierung aktivieren (damit Dokumente nie verloren gehen)
 #   3. Server-seitige Verschlüsselung mit AES256
 #   4. Alle öffentlichen Zugriffe blockieren (vier Flags, alle true)

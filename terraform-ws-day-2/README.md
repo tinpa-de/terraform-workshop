@@ -127,7 +127,9 @@ Copy-Item envs/dev/terraform.tfvars.example envs/dev/terraform.tfvars
 
 Öffnet `envs/dev/terraform.tfvars` in eurem Editor und ersetzt `BitteHierEinStarkesPasswortSetzen!` durch ein eigenes Passwort. Die Datei ist in `.gitignore` — sie wird nie ins Repository eingecheckt.
 
-**Überprüfen:** Der Platzhalter ist durch ein eigenes Passwort ersetzt.
+> **Wichtig:** Sucht in `envs/dev/main.tf` und allen Modulen (`modules/storage/main.tf`,`modules/database/main.tf`, `modules/processor/main.tf`, `modules/api/main.tf`) nach dem Platzhalter `VORNAME` und ersetzt ihn durch euren Vornamen (z.B. `anna`). Das stellt sicher, dass eure Ressourcen eindeutige Namen bekommen und sich nicht mit denen anderer Teilnehmer überschneiden.
+
+**Überprüfen:** Der Platzhalter ist durch ein eigenes Passwort ersetzt, und `VORNAME` ist durch euren Vornamen ersetzt.
 
 ---
 
