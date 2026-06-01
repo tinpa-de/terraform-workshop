@@ -24,10 +24,6 @@ locals {
     Workshop    = "DEVK-2026"
   }
 
-  # Öffentlicher Lambda Layer für psycopg2 (Postgres-Client für Python).
-  # Quelle: https://github.com/keithrozario/Klayers (Account 770693421928)
-  # Aktuelle ARNs für eu-central-1: https://api.klayers.cloud/api/v2/p3.12/layers/latest/eu-central-1/html
-  psycopg2_layer_arn = "arn:aws:lambda:${var.region}:770693421928:layer:Klayers-p312-psycopg2-binary:1"
 }
 
 # =============================================================================
@@ -77,7 +73,6 @@ locals {
 #   db_name     = module.database.db_name
 #   db_username = var.db_username
 #   db_password = var.db_password
-#   layers      = [local.psycopg2_layer_arn]
 #   tags        = local.tags
 # }
 
@@ -93,6 +88,5 @@ locals {
 #   db_name     = module.database.db_name
 #   db_username = var.db_username
 #   db_password = var.db_password
-#   layers      = [local.psycopg2_layer_arn]
 #   tags        = local.tags
 # }

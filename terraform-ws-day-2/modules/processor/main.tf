@@ -26,8 +26,6 @@ resource "aws_lambda_function" "processor" {
   timeout          = 30
   memory_size      = 256
 
-  layers = var.layers
-
   environment {
     variables = {
       DB_HOST     = var.db_host

@@ -129,7 +129,14 @@ Copy-Item envs/dev/terraform.tfvars.example envs/dev/terraform.tfvars
 
 > **Wichtig:** Sucht in `envs/dev/main.tf` und allen Modulen (`modules/storage/main.tf`,`modules/database/main.tf`, `modules/processor/main.tf`, `modules/api/main.tf`) nach dem Platzhalter `VORNAME` und ersetzt ihn durch euren Vornamen (z.B. `anna`). Das stellt sicher, dass eure Ressourcen eindeutige Namen bekommen und sich nicht mit denen anderer Teilnehmer überschneiden.
 
-**Überprüfen:** Der Platzhalter ist durch ein eigenes Passwort ersetzt, und `VORNAME` ist durch euren Vornamen ersetzt.
+Installiert außerdem die Python-Abhängigkeiten für die Lambda-Funktionen:
+
+```bash
+pip3 install -r lambda-src/processor/requirements.txt -t lambda-src/processor/
+pip3 install -r lambda-src/api/requirements.txt -t lambda-src/api/
+```
+
+**Überprüfen:** Der Platzhalter ist durch ein eigenes Passwort ersetzt, `VORNAME` ist durch euren Vornamen ersetzt, und die Abhängigkeiten wurden installiert.
 
 ---
 
@@ -475,7 +482,6 @@ module "processor" {
   db_name     = module.database.db_name
   db_username = var.db_username
   db_password = var.db_password
-  layers      = [local.psycopg2_layer_arn]
   tags        = local.tags
 }
 ```
@@ -575,7 +581,6 @@ module "api" {
   db_name     = module.database.db_name
   db_username = var.db_username
   db_password = var.db_password
-  layers      = [local.psycopg2_layer_arn]
   tags        = local.tags
 }
 ```
@@ -702,4 +707,3 @@ Siehe `docs/troubleshooting.md` und `docs/cheatsheet.md`.
 Häufige Stolpersteine:
 - **Default VPC fehlt**: `aws ec2 create-default-vpc`
 - **terraform.tfvars fehlt**: `cp terraform.tfvars.example terraform.tfvars`
-- **Lambda Layer nicht gefunden**: Aktuelle ARN auf https://api.klayers.cloud prüfen

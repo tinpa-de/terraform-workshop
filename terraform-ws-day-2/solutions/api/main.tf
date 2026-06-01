@@ -11,7 +11,7 @@ data "aws_iam_role" "api" {
 
 # TODO 1: Lambda-Funktion provisionieren
 # Das Muster kennt ihr aus dem Processor-Modul – schaut dort nach.
-# Unterschiede: function_name endet auf "claims-api", timeout = 15, memory_size = 256.
+# Unterschiede: function_name endet auf "claims-api-VORNAME", timeout = 15, memory_size = 256.
 # Zusätzliche Env-Variable: BUCKET_NAME = var.bucket_name
 # IAM-Rolle: data.aws_iam_role.api.arn
 #
@@ -64,8 +64,6 @@ resource "aws_lambda_function" "api" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
-
-  layers = var.layers
 
   environment {
     variables = {
