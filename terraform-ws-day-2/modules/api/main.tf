@@ -15,6 +15,9 @@ data "aws_iam_role" "api" {
 # Zusätzliche Env-Variable: BUCKET_NAME = var.bucket_name
 # IAM-Rolle: data.aws_iam_role.api.arn
 #
+# WICHTIG: Der Log Group Name muss exakt "/aws/lambda/<function_name>" sein –
+# Lambda schreibt Logs automatisch in diese Log Group.
+#
 # resource "aws_cloudwatch_log_group" "lambda" { ... }
 # resource "aws_lambda_function" "api" { ... }
 

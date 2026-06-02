@@ -49,6 +49,8 @@ resource "aws_apigatewayv2_stage" "default" {
   tags = var.tags
 }
 
+# WICHTIG: Der Name muss exakt "/aws/lambda/<function_name>" sein –
+# Lambda schreibt Logs automatisch in diese Log Group.
 resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/${var.project}-${var.environment}-claims-api-VORNAME"
   retention_in_days = 7
