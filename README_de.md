@@ -53,6 +53,15 @@ In Aufgabe 1 fügst du neue `.tf`-Dateien in `terraform/` hinzu. In Aufgabe 2 er
 
 ---
 
+## Voraussetzungen
+
+Bevor du mit dem Setup beginnst, stelle sicher, dass folgendes auf deinem Rechner vorhanden ist:
+
+- **Git** – zum Klonen des Repositories ([git-scm.com](https://git-scm.com))
+- **IDE** – z.B. VS Code ([code.visualstudio.com](https://code.visualstudio.com))
+
+---
+
 ## Setup
 
 Arbeite alle vier Schritte der Reihe nach durch, bevor du mit den Aufgaben beginnst. Wenn etwas fehlschlägt, bitte um Hilfe, bevor du weitermachst.
@@ -128,7 +137,14 @@ Dieser Workshop läuft auf einem gemeinsamen AWS-Konto. Du authentifizierst dich
 
 **Melde dich bei der AWS Console an:**
 
-Öffne https://console.aws.amazon.com in deinem Browser und melde dich mit dem IAM-Benutzernamen und Passwort an, die du erhalten hast.
+Öffne https://856021348966.signin.aws.amazon.com/console in deinem Browser. Benutzername und Passwort erhältst du von uns.
+
+**Erster Login – Passwort ändern:**
+Beim ersten Login wirst du aufgefordert, dein Passwort zu ändern. Das neue Passwort muss folgende Anforderungen erfüllen:
+- Mindestens einen Großbuchstaben (A-Z)
+- Mindestens einen Kleinbuchstaben (a-z)
+- Mindestens eine Zahl
+- Mindestens ein Sonderzeichen (z.B. ! @ # $ %)
 
 **Erstelle einen Zugriffsschlüssel:**
 

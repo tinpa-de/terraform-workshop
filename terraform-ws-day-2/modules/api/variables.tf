@@ -17,11 +17,6 @@ variable "db_password" {
   sensitive = true
 }
 
-variable "layers" {
-  type    = list(string)
-  default = []
-}
-
 variable "tags" {
   type    = map(string)
   default = {}

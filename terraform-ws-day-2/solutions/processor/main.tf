@@ -10,6 +10,8 @@ data "aws_iam_role" "processor" {
 }
 
 # CloudWatch Log Group explizit verwalten (statt implizit von Lambda) -> Retention setzbar
+# WICHTIG: Der Name muss exakt "/aws/lambda/<function_name>" sein –
+# Lambda schreibt Logs automatisch in diese Log Group.
 resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/${var.project}-${var.environment}-claims-processor-VORNAME"
   retention_in_days = 7
@@ -25,8 +27,6 @@ resource "aws_lambda_function" "processor" {
   runtime          = "python3.12"
   timeout          = 30
   memory_size      = 256
-
-  layers = var.layers
 
   environment {
     variables = {

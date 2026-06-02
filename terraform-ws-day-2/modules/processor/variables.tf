@@ -37,12 +37,6 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "layers" {
-  description = "Optional: Lambda Layer ARNs (z.B. für psycopg2)"
-  type        = list(string)
-  default     = []
-}
-
 variable "tags" {
   type    = map(string)
   default = {}

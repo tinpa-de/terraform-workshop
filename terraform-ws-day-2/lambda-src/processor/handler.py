@@ -13,10 +13,9 @@ import json
 import logging
 import os
 import urllib.parse
-from datetime import datetime, timezone
 
 import boto3
-import psycopg2
+import pg8000.native
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
@@ -26,7 +25,7 @@ s3 = boto3.client("s3")
 DB_CONFIG = {
     "host": os.environ["DB_HOST"],
     "port": int(os.environ.get("DB_PORT", "5432")),
-    "dbname": os.environ["DB_NAME"],
+    "database": os.environ["DB_NAME"],
     "user": os.environ["DB_USER"],
     "password": os.environ["DB_PASSWORD"],
 }
@@ -51,13 +50,11 @@ CREATE INDEX IF NOT EXISTS idx_claim_documents_policy
 
 
 def get_connection():
-    return psycopg2.connect(**DB_CONFIG, connect_timeout=10)
+    return pg8000.native.Connection(**DB_CONFIG, timeout=10)
 
 
 def ensure_schema(conn):
-    with conn.cursor() as cur:
-        cur.execute(DDL)
-    conn.commit()
+    conn.run(DDL)
 
 
 def extract_policy_number(key: str) -> str:
@@ -86,18 +83,21 @@ def process_record(conn, record: dict):
     policy_number = extract_policy_number(key)
     filename = key.split("/")[-1]
 
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO claim_documents
-                (policy_number, s3_bucket, s3_key, filename, content_type, size_bytes)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id;
-            """,
-            (policy_number, bucket, key, filename, content_type, size),
-        )
-        new_id = cur.fetchone()[0]
-    conn.commit()
+    rows = conn.run(
+        """
+        INSERT INTO claim_documents
+            (policy_number, s3_bucket, s3_key, filename, content_type, size_bytes)
+        VALUES (:policy_number, :bucket, :key, :filename, :content_type, :size)
+        RETURNING id;
+        """,
+        policy_number=policy_number,
+        bucket=bucket,
+        key=key,
+        filename=filename,
+        content_type=content_type,
+        size=size,
+    )
+    new_id = rows[0][0]
 
     logger.info(
         f"Inserted claim_document id={new_id} policy={policy_number} file={filename}"
