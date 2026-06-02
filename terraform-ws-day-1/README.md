@@ -1,113 +1,113 @@
 # Terraform Workshop
 
-Welcome to this terraform workshop!
+Willkommen zu diesem Terraform-Workshop!
 
-By the end you will have:
-- Deployed a public static website to AWS using Terraform
-- Extracted that setup into a reusable module
-- Deployed two more websites using that module with only a few lines of new code
-
----
-
-## Background: What is Terraform?
-
-Terraform is an **Infrastructure as Code (IaC)** tool. Instead of clicking through the AWS Management Console to create a server, a storage bucket, or a network rule, you describe what you want in plain text files (`.tf` files). Terraform then figures out what needs to be created, changed, or deleted to make the real infrastructure match your description.
-
-Here are the core concepts you'll encounter throughout this workshop:
-
-| Term | What it means |
-|------|---------------|
-| **Resource** | A single piece of infrastructure — an S3 bucket, a database table, a DNS entry. You declare resources in `.tf` files. |
-| **Provider** | A plugin Terraform uses to talk to a specific platform. For example, the `aws` provider knows how to create and manage AWS resources. |
-| **State** | Terraform keeps a record of everything it has created in a *state file*. It uses this to know what already exists and what still needs to change. |
-| **Plan** | A dry run: `terraform plan` shows exactly what Terraform *would* do, without changing anything real. **Always run this before applying.** |
-| **Apply** | `terraform apply` executes the changes shown in the plan. Terraform always asks for confirmation before making real changes. |
-| **Variable** | A named input that makes your configuration reusable and flexible — like a parameter in a function. |
-| **Module** | A reusable group of resources, packaged in its own folder. Like a function you can call multiple times with different arguments. You'll work with modules in Task 2. |
+Am Ende wirst du:
+- Eine öffentliche statische Website auf AWS mit Terraform bereitgestellt haben
+- Das Setup in ein wiederverwendbares Modul extrahiert haben
+- Zwei weitere Websites mit diesem Modul und nur wenigen Zeilen neuem Code bereitgestellt haben
 
 ---
 
-## What we will build
+## Hintergrund: Was ist Terraform?
 
-**Task 1 — Static website:** You will provision an S3 bucket, upload an HTML file, configure public access, and enable S3 static website hosting — step by step.
+Terraform ist ein **Infrastructure as Code (IaC)**-Werkzeug. Anstatt durch die AWS Management Console zu klicken, um einen Server, einen Speicher-Bucket oder eine Netzwerkregel zu erstellen, beschreibst du in einfachen Textdateien (`.tf`-Dateien), was du möchtest. Terraform ermittelt dann, was erstellt, geändert oder gelöscht werden muss, damit die reale Infrastruktur deiner Beschreibung entspricht.
 
-**Task 2 — Modules:** You will extract the Task 1 setup into a reusable Terraform module, then deploy two more websites by calling that module twice.
+Hier sind die Kernkonzepte, denen du in diesem Workshop begegnen wirst:
+
+| Begriff | Bedeutung |
+|---------|-----------|
+| **Resource** | Ein einzelnes Infrastrukturelement — ein S3-Bucket, eine Datenbanktabelle, ein DNS-Eintrag. Ressourcen werden in `.tf`-Dateien deklariert. |
+| **Provider** | Ein Plugin, das Terraform nutzt, um mit einer bestimmten Plattform zu kommunizieren. Der `aws`-Provider weiß zum Beispiel, wie AWS-Ressourcen erstellt und verwaltet werden. |
+| **State** | Terraform speichert alle erstellten Ressourcen in einer *State-Datei*. Damit weiß es, was bereits existiert und was noch geändert werden muss. |
+| **Plan** | Ein Probelauf: `terraform plan` zeigt genau, was Terraform *tun würde*, ohne etwas zu ändern. **Immer vor dem Apply ausführen.** |
+| **Apply** | `terraform apply` führt die im Plan gezeigten Änderungen aus. Terraform fragt immer nach einer Bestätigung, bevor echte Änderungen vorgenommen werden. |
+| **Variable** | Eine benannte Eingabe, die deine Konfiguration wiederverwendbar und flexibel macht — wie ein Parameter in einer Funktion. |
+| **Module** | Eine wiederverwendbare Gruppe von Ressourcen, verpackt in einem eigenen Ordner. Wie eine Funktion, die du mehrfach mit unterschiedlichen Argumenten aufrufen kannst. Du arbeitest in Aufgabe 2 mit Modulen. |
 
 ---
 
-## Repository structure
+## Was wir bauen
+
+**Aufgabe 1 — Statische Website:** Du richtest einen S3-Bucket ein, lädst eine HTML-Datei hoch, konfigurierst öffentlichen Zugriff und aktivierst das statische Website-Hosting von S3 — Schritt für Schritt.
+
+**Aufgabe 2 — Module:** Du extrahierst das Setup aus Aufgabe 1 in ein wiederverwendbares Terraform-Modul und stellst dann zwei weitere Websites bereit, indem du das Modul zweimal aufrufst.
+
+---
+
+## Repository-Struktur
 
 ```
 terraform-workshop/
 └── terraform-ws-day-1/
     ├── resources/
-    │   ├── static-page/index.html       ← Website file for Task 1
-    │   ├── static-page-2/index.html     ← Website file for Task 2 (second site)
-    │   └── static-page-3/index.html     ← Website file for Task 2 (third site)
+    │   ├── static-page/index.html       ← Website-Datei für Aufgabe 1
+    │   ├── static-page-2/index.html     ← Website-Datei für Aufgabe 2 (zweite Seite)
+    │   └── static-page-3/index.html     ← Website-Datei für Aufgabe 2 (dritte Seite)
     └── terraform/
-        ├── main.tf                      ← You will edit this in Setup Step 4
+        ├── main.tf                      ← Du bearbeitest diese Datei in Setup-Schritt 4
         └── variables.tf
 ```
 
-During Task 1 you will add new `.tf` files inside `terraform/`. During Task 2 you will create the `terraform/modules/` folder.
+In Aufgabe 1 fügst du neue `.tf`-Dateien in `terraform/` hinzu. In Aufgabe 2 erstellst du den Ordner `terraform/modules/`.
 
 ---
 
-## Prerequisites
+## Voraussetzungen
 
-Before starting the setup, make sure the following are available on your machine:
+Bevor du mit dem Setup beginnst, stelle sicher, dass folgendes auf deinem Rechner vorhanden ist:
 
-- **Git** – to clone the repository ([git-scm.com](https://git-scm.com))
-- **IDE** – e.g. VS Code ([code.visualstudio.com](https://code.visualstudio.com))
+- **Git** – zum Klonen des Repositories ([git-scm.com](https://git-scm.com))
+- **IDE** – z.B. VS Code ([code.visualstudio.com](https://code.visualstudio.com))
 
 ---
 
 ## Setup
 
-Work through all four steps in order before starting the tasks. If anything fails, ask for help before moving on.
+Arbeite alle vier Schritte der Reihe nach durch, bevor du mit den Aufgaben beginnst. Wenn etwas fehlschlägt, bitte um Hilfe, bevor du weitermachst.
 
 ---
 
-### Step 1 – Install the required tools
+### Schritt 1 – Erforderliche Tools installieren
 
-You need two tools installed on your machine: **Terraform** (to manage infrastructure) and the **AWS CLI** (to authenticate with AWS).
+Du benötigst zwei Tools auf deinem Rechner: **Terraform** (zur Verwaltung der Infrastruktur) und die **AWS CLI** (zur Authentifizierung bei AWS).
 
 #### macOS
 
-Open a terminal and run:
+Öffne ein Terminal und führe aus:
 
 ```bash
 brew tap hashicorp/tap
 brew install hashicorp/tap/terraform awscli
 ```
 
-> If you do not have Homebrew installed yet, follow the instructions at https://brew.sh first.
+> Wenn du Homebrew noch nicht installiert hast, folge zuerst den Anweisungen unter https://brew.sh.
 
 #### Windows
 
-Open **PowerShell as Administrator** and run:
+Öffne **PowerShell als Administrator** und führe aus:
 
 ```powershell
 winget install HashiCorp.Terraform
 winget install Amazon.AWSCLI
 ```
 
-> Close and reopen PowerShell after the install so the new commands are available on your PATH.
+> Schließe PowerShell nach der Installation und öffne es erneut, damit die neuen Befehle in deinem PATH verfügbar sind.
 
-**Verify both tools are installed correctly:**
+**Überprüfe, ob beide Tools korrekt installiert sind:**
 
 ```bash
 terraform version
 aws --version
 ```
 
-Both commands should print a version number. If either command is not found, check the installation steps again.
+Beide Befehle sollten eine Versionsnummer ausgeben. Wenn ein Befehl nicht gefunden wird, überprüfe die Installationsschritte erneut.
 
 ---
 
-### Step 2 – Set the `tf` alias
+### Schritt 2 – Den `tf`-Alias einrichten
 
-Throughout this workshop we type `tf` instead of `terraform` to save time. This sets up a shell alias that makes `tf` equivalent to `terraform`.
+Im gesamten Workshop tippen wir `tf` statt `terraform`, um Zeit zu sparen. Dieser Schritt richtet einen Shell-Alias ein, der `tf` zu einem Äquivalent von `terraform` macht.
 
 #### macOS / Linux (zsh)
 
@@ -123,7 +123,7 @@ Add-Content $PROFILE 'Set-Alias tf terraform'
 . $PROFILE
 ```
 
-**Verify the alias works:**
+**Überprüfe, ob der Alias funktioniert:**
 
 ```bash
 tf version
@@ -131,285 +131,285 @@ tf version
 
 ---
 
-### Step 3 – Log in to AWS and configure credentials
+### Schritt 3 – Bei AWS anmelden und Zugangsdaten konfigurieren
 
-This workshop runs on a shared AWS account. You authenticate using an **IAM user** with an access key.
+Dieser Workshop läuft auf einem gemeinsamen AWS-Konto. Du authentifizierst dich mit einem **IAM-Benutzer** und einem Zugriffsschlüssel.
 
-**Log in to the AWS Console:**
+**Melde dich bei der AWS Console an:**
 
-Open https://856021348966.signin.aws.amazon.com/console in your browser. You will receive your username and password from us.
+Öffne https://856021348966.signin.aws.amazon.com/console in deinem Browser. Benutzername und Passwort erhältst du von uns.
 
-**First login – change your password:**
-On your first login you will be prompted to change your password. The new password must meet the following requirements:
-- At least one uppercase letter (A-Z)
-- At least one lowercase letter (a-z)
-- At least one number
-- At least one special character (e.g. ! @ # $ %)
+**Erster Login – Passwort ändern:**
+Beim ersten Login wirst du aufgefordert, dein Passwort zu ändern. Das neue Passwort muss folgende Anforderungen erfüllen:
+- Mindestens einen Großbuchstaben (A-Z)
+- Mindestens einen Kleinbuchstaben (a-z)
+- Mindestens eine Zahl
+- Mindestens ein Sonderzeichen (z.B. ! @ # $ %)
 
-**Create an access key:**
+**Erstelle einen Zugriffsschlüssel:**
 
-1. In the top-right corner, click your username → **Security credentials**.
-2. Scroll down to **Access keys** and click **Create access key**.
-3. Select **Command Line Interface (CLI)** as the use case, acknowledge the recommendation, and click **Next**.
-4. Click **Create access key**.
-5. **Copy both the Access Key ID and the Secret Access Key now** — the secret is only shown once.
+1. Klicke rechts oben auf deinen Benutzernamen → **Security credentials**.
+2. Scrolle nach unten zu **Access keys** und klicke auf **Create access key**.
+3. Wähle **Command Line Interface (CLI)** als Anwendungsfall, bestätige die Empfehlung und klicke auf **Next**.
+4. Klicke auf **Create access key**.
+5. **Kopiere jetzt sowohl die Access Key ID als auch den Secret Access Key** — das Secret wird nur einmal angezeigt.
 
-**Save the credentials as environment variables:**
+**Speichere die Zugangsdaten als Umgebungsvariablen:**
 
 macOS / Linux:
 ```bash
-export AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY
+export AWS_ACCESS_KEY_ID=DEINE_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=DEIN_SECRET_ACCESS_KEY
 export AWS_DEFAULT_REGION=eu-west-1
 ```
 
 Windows (PowerShell):
 ```powershell
-$env:AWS_ACCESS_KEY_ID = "YOUR_ACCESS_KEY_ID"
-$env:AWS_SECRET_ACCESS_KEY = "YOUR_SECRET_ACCESS_KEY"
+$env:AWS_ACCESS_KEY_ID = "DEINE_ACCESS_KEY_ID"
+$env:AWS_SECRET_ACCESS_KEY = "DEIN_SECRET_ACCESS_KEY"
 $env:AWS_DEFAULT_REGION = "eu-west-1"
 ```
 
-> These variables are only set for the current terminal session. You will need to set them again every time you open a new terminal window. If you encounter authentication errors later, this is the first thing to check.
+> Diese Variablen gelten nur für die aktuelle Terminal-Sitzung. Du musst sie jedes Mal neu setzen, wenn du ein neues Terminal-Fenster öffnest. Wenn du später Authentifizierungsfehler erhältst, ist das die erste Stelle, die du überprüfen solltest.
 
-**Verify your access:**
+**Überprüfe deinen Zugang:**
 
 ```bash
 aws s3 ls
 ```
 
-You should see a list of S3 buckets. If you see an authentication error, double-check that all three environment variables are set correctly.
+Du solltest eine Liste von S3-Buckets sehen. Bei einem Authentifizierungsfehler überprüfe, ob alle drei Umgebungsvariablen korrekt gesetzt sind.
 
 ---
 
-### Step 4 – Initialize Terraform
+### Schritt 4 – Terraform initialisieren
 
-Navigate to the `terraform/` directory and download the required provider plugins:
+Wechsle in das Verzeichnis `terraform/` und lade die erforderlichen Provider-Plugins herunter:
 
 ```bash
 cd terraform
 tf init
 ```
 
-You should see: `Terraform has been successfully initialized!` You are now fully set up and ready to start the tasks.
+Du solltest sehen: `Terraform has been successfully initialized!` Du bist jetzt vollständig eingerichtet und kannst mit den Aufgaben beginnen.
 
 ---
 
-## Task 1 – Host a Static Website on S3
+## Aufgabe 1 – Eine statische Website auf S3 hosten
 
-In this task you will create an S3 bucket and configure it to serve a public static website. All Terraform files you create go inside the `terraform/` directory.
+In dieser Aufgabe erstellst du einen S3-Bucket und konfigurierst ihn so, dass er eine öffentliche statische Website bereitstellt. Alle Terraform-Dateien, die du erstellst, kommen in das Verzeichnis `terraform/`.
 
-### Understanding resource declarations
+### Ressourcendeklarationen verstehen
 
-Every resource in Terraform follows the same pattern:
+Jede Ressource in Terraform folgt demselben Muster:
 
 ```hcl
-resource "TYPE" "LOCAL_NAME" {
-  argument = "value"
+resource "TYP" "LOKALER_NAME" {
+  argument = "wert"
 }
 ```
 
-- `TYPE` is the resource type defined by the provider, for example `aws_s3_bucket`.
-- `LOCAL_NAME` is a name you choose — it's only used inside your Terraform code to reference this specific resource from elsewhere.
-- The arguments inside the block configure the resource. What arguments exist and which are required is documented in the [Terraform Registry](https://registry.terraform.io/providers/hashicorp/aws/latest/docs).
+- `TYP` ist der vom Provider definierte Ressourcentyp, zum Beispiel `aws_s3_bucket`.
+- `LOKALER_NAME` ist ein von dir gewählter Name — er wird nur innerhalb deines Terraform-Codes verwendet, um diese spezifische Ressource von anderer Stelle zu referenzieren.
+- Die Argumente im Block konfigurieren die Ressource. Welche Argumente existieren und welche erforderlich sind, ist in der [Terraform Registry](https://registry.terraform.io/providers/hashicorp/aws/latest/docs) dokumentiert.
 
-**Referencing another resource** lets you use its attributes without copying values manually. For example:
+**Eine andere Ressource referenzieren** ermöglicht es dir, deren Attribute zu verwenden, ohne Werte manuell zu kopieren. Zum Beispiel:
 
 ```hcl
 bucket_id = aws_s3_bucket.my_bucket.id
 ```
 
-This reads the `id` attribute of the resource of type `aws_s3_bucket` that you named `my_bucket`. Terraform automatically figures out the correct order to create the two resources.
+Dies liest das `id`-Attribut der Ressource vom Typ `aws_s3_bucket` mit dem Namen `my_bucket`. Terraform ermittelt automatisch die richtige Reihenfolge, in der die beiden Ressourcen erstellt werden.
 
-**Your workflow for every step:**
+**Dein Arbeitsablauf für jeden Schritt:**
 
 ```
-Write or change .tf files  →  tf plan  →  review the output  →  tf apply
+.tf-Dateien schreiben oder ändern  →  tf plan  →  Ausgabe prüfen  →  tf apply
 ```
 
-Never skip `tf plan`. It shows exactly what will happen before anything is changed in AWS.
+Überspringe niemals `tf plan`. Es zeigt genau, was passieren wird, bevor etwas in AWS geändert wird.
 
-### About providers in this workshop
+### Über Provider in diesem Workshop
 
-The `terraform/main.tf` file already configures two AWS providers for you:
+Die Datei `terraform/main.tf` konfiguriert bereits zwei AWS-Provider für dich:
 
-- `aws.frankfurt` — used for most resources (region: `eu-central-1`)
+- `aws.frankfurt` — verwendet für die meisten Ressourcen (Region: `eu-central-1`)
 
-To assign a specific provider to a resource, add this argument inside its block:
+Um einer Ressource einen bestimmten Provider zuzuweisen, füge dieses Argument in deren Block ein:
 
 ```hcl
 provider = aws.frankfurt
 ```
 
-Use `aws.frankfurt` for every resource you create in Task 1.
+Verwende `aws.frankfurt` für jede Ressource, die du in Aufgabe 1 erstellst.
 
 ---
 
-### 1.1 – Create an S3 bucket
+### 1.1 – Einen S3-Bucket erstellen
 
-**Goal:** Create a new file called `terraform/s3.tf` and declare an `aws_s3_bucket` resource inside it. The bucket name must be **globally unique across all of AWS** — prefix it with your name, for example `justus-workshop-static-page`.
+**Ziel:** Erstelle eine neue Datei namens `terraform/s3.tf` und deklariere darin eine `aws_s3_bucket`-Ressource. Der Bucket-Name muss **global eindeutig über ganz AWS** sein — stelle ihm deinen Namen voran, zum Beispiel `justus-workshop-static-page`.
 
-Run `tf plan` and read the output to understand what Terraform is going to do, then run `tf apply`.
+Führe `tf plan` aus und lies die Ausgabe, um zu verstehen, was Terraform tun wird, dann führe `tf apply` aus.
 
-**Verify:** After applying, open the AWS Console and navigate to S3 — your bucket should appear in the list. Alternatively, run `aws s3 ls` in your terminal.
+**Überprüfung:** Öffne nach dem Apply die AWS Console und navigiere zu S3 — dein Bucket sollte in der Liste erscheinen. Alternativ kannst du `aws s3 ls` in deinem Terminal ausführen.
 
-**Terraform documentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket
+**Terraform-Dokumentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket
 
 <details>
-<summary>Hint</summary>
+<summary>Hinweis</summary>
 
-The `aws_s3_bucket` resource only needs a `bucket` argument (the name) and the `provider` argument at this stage. Keep it minimal — you will configure the bucket's behaviour through separate, dedicated resources in the following steps. That's the Terraform approach: one resource, one concern.
+Die `aws_s3_bucket`-Ressource benötigt in diesem Stadium nur ein `bucket`-Argument (den Namen) und das `provider`-Argument. Halte es minimal — du wirst das Verhalten des Buckets in den folgenden Schritten über separate, dedizierte Ressourcen konfigurieren. Das ist der Terraform-Ansatz: eine Ressource, ein Thema.
 
-S3 bucket names must be globally unique across all AWS accounts worldwide. Including your name, company, and today's date (e.g. `justus-nl-20250517`) is a reliable way to avoid conflicts with other people's buckets.
+S3-Bucket-Namen müssen global eindeutig über alle AWS-Konten weltweit sein. Deinen Namen, das Unternehmen und das heutige Datum einzubeziehen (z.B. `justus-nl-20250517`) ist eine zuverlässige Methode, um Konflikte mit Buckets anderer Personen zu vermeiden.
 
 </details>
 
 ---
 
-### 1.2 – Upload the website file
+### 1.2 – Die Website-Datei hochladen
 
-**Goal:** Add an `aws_s3_object` resource to `terraform/s3.tf` that uploads `../resources/static-page/index.html` into your bucket. Use a **reference** to your bucket resource rather than copying the bucket name as a string. Set the correct content type so browsers know to render the file as a webpage.
+**Ziel:** Füge eine `aws_s3_object`-Ressource zu `terraform/s3.tf` hinzu, die `../resources/static-page/index.html` in deinen Bucket hochlädt. Verwende eine **Referenz** auf deine Bucket-Ressource statt den Bucket-Namen als String zu kopieren. Setze den korrekten Content-Type, damit Browser wissen, dass sie die Datei als Webseite rendern sollen.
 
-Run `tf plan` → `tf apply`, then verify the file appears inside your bucket under the **Objects** tab in the AWS Console.
+Führe `tf plan` → `tf apply` aus, dann überprüfe, ob die Datei in deinem Bucket im Tab **Objects** in der AWS Console erscheint.
 
-**Terraform documentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object
+**Terraform-Dokumentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object
 
 <details>
-<summary>Hint</summary>
+<summary>Hinweis</summary>
 
-`aws_s3_object` needs three key arguments:
+`aws_s3_object` benötigt drei Schlüsselargumente:
 
-- `bucket` — the name of the bucket to upload into. Use a resource reference instead of a hard-coded string: `aws_s3_bucket.YOUR_LOCAL_NAME.id`
-- `key` — the name the file will have inside S3, e.g. `"index.html"`
-- `source` — the local file path, relative to the `terraform/` directory
+- `bucket` — der Name des Buckets, in den hochgeladen werden soll. Verwende eine Ressourcenreferenz statt eines hartcodierten Strings: `aws_s3_bucket.DEIN_LOKALER_NAME.id`
+- `key` — der Name, den die Datei in S3 haben soll, z.B. `"index.html"`
+- `source` — der lokale Dateipfad, relativ zum Verzeichnis `terraform/`
 
-The correct `content_type` for an HTML file is `"text/html"`. Without this, browsers will download the file instead of rendering it.
+Der korrekte `content_type` für eine HTML-Datei ist `"text/html"`. Ohne diesen werden Browser die Datei herunterladen statt sie zu rendern.
 
-To ensure Terraform notices when the file contents change and re-uploads it, set `etag = filemd5("../resources/static-page/index.html")`. Terraform compares this hash on every plan and triggers an update if the file changes.
+Um sicherzustellen, dass Terraform bemerkt, wenn sich der Dateiinhalt ändert, und die Datei erneut hochlädt, setze `etag = filemd5("../resources/static-page/index.html")`. Terraform vergleicht diesen Hash bei jedem Plan und löst ein Update aus, wenn sich die Datei ändert.
 
 </details>
 
 ---
 
-### 1.3 – Allow public read access
+### 1.3 – Öffentlichen Lesezugriff erlauben
 
-By default, AWS blocks all public access to every S3 bucket. To host a public website, you need to take two separate steps:
+Standardmäßig blockiert AWS den gesamten öffentlichen Zugriff auf jeden S3-Bucket. Um eine öffentliche Website zu hosten, musst du zwei separate Schritte durchführen:
 
-1. **Disable the "Block Public Access" settings** on the bucket.
-2. **Attach a bucket policy** that explicitly grants any anonymous internet visitor the right to read objects.
+1. **Die "Block Public Access"-Einstellungen** des Buckets deaktivieren.
+2. **Eine Bucket-Policy anhängen**, die jedem anonymen Internetbesucher das Recht gewährt, Objekte zu lesen.
 
-Both require their own Terraform resource. After applying both, any internet user should be able to fetch `index.html` without authenticating to AWS.
+Beide erfordern ihre eigene Terraform-Ressource. Nach dem Apply sollte jeder Internetnutzer `index.html` abrufen können, ohne sich bei AWS zu authentifizieren.
 
-**Goal:** Add both of these resources to `s3.tf` and apply them.
+**Ziel:** Füge beide Ressourcen zu `s3.tf` hinzu und wende sie an.
 
-**Terraform documentation:**
-- Public access block: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block
-- Bucket policy: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy
+**Terraform-Dokumentation:**
+- Public Access Block: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block
+- Bucket Policy: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy
 
 <details>
-<summary>Hint — disabling Block Public Access</summary>
+<summary>Hinweis — Block Public Access deaktivieren</summary>
 
-`aws_s3_bucket_public_access_block` has four boolean arguments — `block_public_acls`, `block_public_policy`, `ignore_public_acls`, and `restrict_public_buckets` — all of which default to `true` (everything blocked). Set all four to `false` to lift the restriction entirely.
+`aws_s3_bucket_public_access_block` hat vier boolesche Argumente — `block_public_acls`, `block_public_policy`, `ignore_public_acls` und `restrict_public_buckets` — die alle standardmäßig `true` (alles blockiert) sind. Setze alle vier auf `false`, um die Einschränkung vollständig aufzuheben.
 
-Reference the same bucket you created in step 1.1.
+Referenziere denselben Bucket, den du in Schritt 1.1 erstellt hast.
 
 </details>
 
 <details>
-<summary>Hint — bucket policy</summary>
+<summary>Hinweis — Bucket Policy</summary>
 
-A bucket policy is a JSON document defining who can do what with your bucket. The `aws_s3_bucket_policy` resource takes a `policy` argument containing that JSON as a string.
+Eine Bucket-Policy ist ein JSON-Dokument, das definiert, wer was mit deinem Bucket tun kann. Die `aws_s3_bucket_policy`-Ressource nimmt ein `policy`-Argument entgegen, das dieses JSON als String enthält.
 
-The policy you need grants the following:
-- **Principal:** `"*"` — anyone, including unauthenticated users
-- **Action:** `"s3:GetObject"` — the right to download objects
-- **Resource:** every object in your bucket — the ARN pattern is `"arn:aws:s3:::YOUR_BUCKET_NAME/*"`
+Die benötigte Policy gewährt Folgendes:
+- **Principal:** `"*"` — alle, einschließlich nicht authentifizierter Benutzer
+- **Action:** `"s3:GetObject"` — das Recht, Objekte herunterzuladen
+- **Resource:** jedes Objekt in deinem Bucket — das ARN-Muster ist `"arn:aws:s3:::DEIN_BUCKET_NAME/*"`
 
-Using Terraform's built-in `jsonencode()` function lets you write the JSON as a native HCL map, which avoids quoting issues and is easier to read.
+Die Verwendung der eingebauten `jsonencode()`-Funktion von Terraform ermöglicht es dir, das JSON als native HCL-Map zu schreiben, was Probleme mit Anführungszeichen vermeidet und leichter zu lesen ist.
 
-**Important ordering constraint:** AWS will reject the bucket policy as long as "Block Public Access" is still enabled. Terraform is not aware of this AWS-specific dependency automatically — you must tell it explicitly by adding `depends_on = [aws_s3_bucket_public_access_block.YOUR_LOCAL_NAME]` to the bucket policy resource. This guarantees the block public access settings are applied before the policy.
+**Wichtige Reihenfolge:** AWS lehnt die Bucket-Policy ab, solange "Block Public Access" noch aktiviert ist. Terraform ist sich dieser AWS-spezifischen Abhängigkeit nicht automatisch bewusst — du musst sie explizit angeben, indem du `depends_on = [aws_s3_bucket_public_access_block.DEIN_LOKALER_NAME]` zur Bucket-Policy-Ressource hinzufügst. Dies stellt sicher, dass die Block-Public-Access-Einstellungen angewendet werden, bevor die Policy gesetzt wird.
 
 </details>
 
-**Verify:** Open a private / incognito browser window. In the AWS Console, navigate to your bucket, click on `index.html`, and copy the **Object URL** (visible under the Properties or Details pane). Paste that URL into the private browser window. You should be able to access the file without being logged in to AWS. If you see an "Access Denied" error, re-check both resources from this step.
+**Überprüfung:** Öffne ein privates / Inkognito-Browserfenster. Navigiere in der AWS Console zu deinem Bucket, klicke auf `index.html` und kopiere die **Object URL** (sichtbar im Bereich Properties oder Details). Füge diese URL in das private Browserfenster ein. Du solltest auf die Datei zugreifen können, ohne bei AWS angemeldet zu sein. Wenn du einen "Access Denied"-Fehler siehst, überprüfe beide Ressourcen aus diesem Schritt erneut.
 
 ---
 
-### 1.4 – Enable static website hosting
+### 1.4 – Statisches Website-Hosting aktivieren
 
-When a browser requests an object from a regular S3 URL, S3 returns the file as a plain download. S3's static website hosting feature changes this behaviour: it serves the content with the correct HTTP response headers so browsers render it as a proper webpage, and it serves `index.html` automatically when a visitor loads the root URL.
+Wenn ein Browser ein Objekt über eine reguläre S3-URL anfordert, gibt S3 die Datei als einfachen Download zurück. Das statische Website-Hosting-Feature von S3 ändert dieses Verhalten: Es liefert den Inhalt mit den korrekten HTTP-Antwort-Headern, damit Browser ihn als richtige Webseite rendern, und liefert `index.html` automatisch, wenn ein Besucher die Root-URL aufruft.
 
-**Goal:** Add an `aws_s3_bucket_website_configuration` resource to `s3.tf` that enables static website hosting and sets `index.html` as the index document. After applying, S3 exposes a dedicated **website endpoint URL** — use that URL to open your website in a browser.
+**Ziel:** Füge eine `aws_s3_bucket_website_configuration`-Ressource zu `s3.tf` hinzu, die das statische Website-Hosting aktiviert und `index.html` als Index-Dokument festlegt. Nach dem Apply stellt S3 eine dedizierte **Website-Endpunkt-URL** bereit — nutze diese URL, um deine Website im Browser zu öffnen.
 
-**Terraform documentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_website_configuration
+**Terraform-Dokumentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_website_configuration
 
 <details>
-<summary>Hint</summary>
+<summary>Hinweis</summary>
 
-`aws_s3_bucket_website_configuration` requires an `index_document` block with a `suffix` argument set to `"index.html"`.
+`aws_s3_bucket_website_configuration` erfordert einen `index_document`-Block mit einem `suffix`-Argument, das auf `"index.html"` gesetzt ist.
 
-After applying, the website endpoint is available as an attribute of this resource: `aws_s3_bucket_website_configuration.YOUR_LOCAL_NAME.website_endpoint`. You can make Terraform print it automatically at the end of every `tf apply` by adding an `output` block:
+Nach dem Apply ist der Website-Endpunkt als Attribut dieser Ressource verfügbar: `aws_s3_bucket_website_configuration.DEIN_LOKALER_NAME.website_endpoint`. Du kannst Terraform dazu bringen, ihn am Ende jedes `tf apply` automatisch auszugeben, indem du einen `output`-Block hinzufügst:
 
 ```hcl
 output "website_url" {
-  value = "http://${aws_s3_bucket_website_configuration.YOUR_LOCAL_NAME.website_endpoint}"
+  value = "http://${aws_s3_bucket_website_configuration.DEIN_LOKALER_NAME.website_endpoint}"
 }
 ```
 
-Run `tf apply` again (Terraform will notice the new output block) or run `tf output` to print all outputs without making any changes.
+Führe `tf apply` erneut aus (Terraform bemerkt den neuen Output-Block) oder führe `tf output` aus, um alle Outputs ohne Änderungen auszugeben.
 
 </details>
 
-**Verify:** Open the website endpoint URL in your browser. You should see an animated "It's Alive!" page. If you see an XML "AccessDenied" error instead, go back to step 1.3 and double-check the bucket policy and the public access block settings.
+**Überprüfung:** Öffne die Website-Endpunkt-URL in deinem Browser. Du solltest eine animierte "It's Alive!"-Seite sehen. Wenn stattdessen ein XML "AccessDenied"-Fehler erscheint, gehe zurück zu Schritt 1.3 und überprüfe die Bucket-Policy und die Block-Public-Access-Einstellungen.
 
 ---
 
-### Bonus – Serve the website via CloudFront (HTTPS)
+### Bonus – Website über CloudFront bereitstellen (HTTPS)
 
-S3 website endpoints only support plain HTTP. **CloudFront** is AWS's global content delivery network (CDN). Placing it in front of your S3 bucket adds HTTPS support and a CloudFront-provided domain name — no custom domain required.
+S3-Website-Endpunkte unterstützen nur einfaches HTTP. **CloudFront** ist das globale Content Delivery Network (CDN) von AWS. Es vor deinen S3-Bucket zu schalten, fügt HTTPS-Unterstützung und einen von CloudFront bereitgestellten Domainnamen hinzu — keine eigene Domain erforderlich.
 
-This is a larger task. It involves:
+Dies ist eine größere Aufgabe. Sie umfasst:
 
-- An `aws_cloudfront_origin_access_control` resource to allow CloudFront to fetch objects from your bucket using a secure internal channel
-- An `aws_cloudfront_distribution` resource configured with your S3 bucket as the origin
-- Updating your bucket policy so that only CloudFront can access the bucket, instead of the public internet directly
+- Eine `aws_cloudfront_origin_access_control`-Ressource, damit CloudFront Objekte aus deinem Bucket über einen sicheren internen Kanal abrufen kann
+- Eine `aws_cloudfront_distribution`-Ressource, konfiguriert mit deinem S3-Bucket als Origin
+- Das Aktualisieren deiner Bucket-Policy, damit nur CloudFront auf den Bucket zugreifen kann, statt das öffentliche Internet direkt
 
-**Terraform documentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution
-
----
-
-## Task 2 – Reuse with a Terraform Module
-
-You now have a working static website made up of several Terraform resources. To deploy a second and a third website, you could copy all those resources — but maintaining three nearly identical copies of the same code is fragile and tedious. Instead, you will extract the setup into a **reusable module**.
-
-### What is a module?
-
-A module is simply a directory that contains `.tf` files. When your root configuration calls a module, Terraform reads those files as if you had written them directly in the root — but uses the variable values you pass in. You define the module once and call it as many times as you need, each time with different inputs. Think of it exactly like calling a function in a programming language.
-
-Your module will live at `terraform/modules/static-webpage/`.
+**Terraform-Dokumentation:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution
 
 ---
 
-### 2.1 – Create the module folder structure
+## Aufgabe 2 – Wiederverwendung mit einem Terraform-Modul
 
-**Goal:** Create the following two empty files:
+Du hast jetzt eine funktionierende statische Website, die aus mehreren Terraform-Ressourcen besteht. Um eine zweite und dritte Website bereitzustellen, könntest du all diese Ressourcen kopieren — aber drei fast identische Kopien desselben Codes zu pflegen ist fehleranfällig und mühsam. Stattdessen extrahierst du das Setup in ein **wiederverwendbares Modul**.
+
+### Was ist ein Modul?
+
+Ein Modul ist schlicht ein Verzeichnis mit `.tf`-Dateien. Wenn deine Root-Konfiguration ein Modul aufruft, liest Terraform diese Dateien, als ob du sie direkt im Root geschrieben hättest — aber mit den von dir übergebenen Variablenwerten. Du definierst das Modul einmal und rufst es so oft wie nötig auf, jedes Mal mit anderen Eingaben. Stell es dir genau wie den Aufruf einer Funktion in einer Programmiersprache vor.
+
+Dein Modul wird unter `terraform/modules/static-webpage/` liegen.
+
+---
+
+### 2.1 – Modulordnerstruktur erstellen
+
+**Ziel:** Erstelle die folgenden zwei leeren Dateien:
 
 ```
 terraform/modules/static-webpage/main.tf
 terraform/modules/static-webpage/variables.tf
 ```
 
-No Terraform commands are needed yet — these are just empty files to establish the structure.
+Es sind noch keine Terraform-Befehle erforderlich — diese sind nur leere Dateien, um die Struktur zu etablieren.
 
 ---
 
-### 2.2 – Move your resources into the module
+### 2.2 – Ressourcen in das Modul verschieben
 
-**Goal:** Cut all `aws_s3_*` resources from `terraform/s3.tf` and paste them into `terraform/modules/static-webpage/main.tf`. The `terraform {}` block, `provider` blocks, and `output` blocks stay in the root `main.tf` — do not copy those into the module.
+**Ziel:** Schneide alle `aws_s3_*`-Ressourcen aus `terraform/s3.tf` aus und füge sie in `terraform/modules/static-webpage/main.tf` ein. Der `terraform {}`-Block, `provider`-Blöcke und `output`-Blöcke verbleiben in der Root-`main.tf` — kopiere diese nicht in das Modul.
 
-Once the resources are moved you can delete `terraform/s3.tf`.
+Sobald die Ressourcen verschoben sind, kannst du `terraform/s3.tf` löschen.
 
-> **Providers inside modules — important:** The root `main.tf` uses *aliased* providers (`aws.frankfurt`). A child module must explicitly declare which provider aliases it expects. Add the following block at the top of `terraform/modules/static-webpage/main.tf`:
+> **Provider innerhalb von Modulen — wichtig:** Die Root-`main.tf` verwendet *aliasierte* Provider (`aws.frankfurt`). Ein Child-Modul muss explizit deklarieren, welche Provider-Aliases es erwartet. Füge den folgenden Block am Anfang von `terraform/modules/static-webpage/main.tf` hinzu:
 >
 > ```hcl
 > terraform {
@@ -422,57 +422,57 @@ Once the resources are moved you can delete `terraform/s3.tf`.
 > }
 > ```
 >
-> This tells Terraform: "this module requires a provider configured under the alias `aws.frankfurt`." You will pass the actual provider in when you call the module in step 2.4.
+> Dies teilt Terraform mit: "Dieses Modul erfordert einen Provider, der unter dem Alias `aws.frankfurt` konfiguriert ist." Du übergibst den tatsächlichen Provider, wenn du das Modul in Schritt 2.4 aufrufst.
 
 ---
 
-### 2.3 – Declare input variables for the module
+### 2.3 – Eingabevariablen für das Modul deklarieren
 
-Right now the resources in the module contain hard-coded values: your bucket name and the file path. Replace those with **variables** so the module can be called with different inputs each time.
+Derzeit enthalten die Ressourcen im Modul hartcodierte Werte: deinen Bucket-Namen und den Dateipfad. Ersetze diese durch **Variablen**, damit das Modul bei jedem Aufruf mit unterschiedlichen Eingaben verwendet werden kann.
 
-**Goal:** Add two input variables to `terraform/modules/static-webpage/variables.tf`:
+**Ziel:** Füge zwei Eingabevariablen zu `terraform/modules/static-webpage/variables.tf` hinzu:
 
-| Variable | Type | Description |
-|----------|------|-------------|
-| `name` | `string` | A short identifier for this website. Used to construct a unique bucket name. |
-| `filepath` | `string` | The local path to the HTML file to upload, relative to the `terraform/` directory. |
+| Variable | Typ | Beschreibung |
+|----------|-----|--------------|
+| `name` | `string` | Eine kurze Kennung für diese Website. Wird zur Konstruktion eines eindeutigen Bucket-Namens verwendet. |
+| `filepath` | `string` | Der lokale Pfad zur hochzuladenden HTML-Datei, relativ zum Verzeichnis `terraform/`. |
 
-Then update the resources in `main.tf` inside the module to use `var.name` and `var.filepath` instead of the hard-coded values.
+Aktualisiere dann die Ressourcen in `main.tf` innerhalb des Moduls, um `var.name` und `var.filepath` statt der hartcodierten Werte zu verwenden.
 
-**Terraform documentation:** https://developer.hashicorp.com/terraform/language/values/variables
+**Terraform-Dokumentation:** https://developer.hashicorp.com/terraform/language/values/variables
 
 <details>
-<summary>Hint</summary>
+<summary>Hinweis</summary>
 
-A variable is declared with a `variable` block:
+Eine Variable wird mit einem `variable`-Block deklariert:
 
 ```hcl
 variable "name" {
-  description = "A short identifier for this website deployment."
+  description = "Eine kurze Kennung für diese Website-Bereitstellung."
   type        = string
 }
 ```
 
-Inside the module's resource definitions, reference the variable using `var.name` and `var.filepath`.
+Innerhalb der Ressourcendefinitionen des Moduls referenziere die Variable mit `var.name` und `var.filepath`.
 
-For the bucket name, concatenate the variable with a fixed prefix to keep names unique across multiple module calls. For example: `bucket = "workshop-${var.name}"`. The `${}` syntax is Terraform string interpolation — it embeds the value of an expression inside a string.
+Für den Bucket-Namen verknüpfe die Variable mit einem festen Präfix, um Namen über mehrere Modulaufrufe hinweg eindeutig zu halten. Zum Beispiel: `bucket = "workshop-${var.name}"`. Die `${}`-Syntax ist die String-Interpolation von Terraform — sie bettet den Wert eines Ausdrucks in einen String ein.
 
 </details>
 
 ---
 
-### 2.4 – Call the module from the root configuration
+### 2.4 – Das Modul aus der Root-Konfiguration aufrufen
 
-**Goal:** Add a `module` block to `terraform/main.tf` that calls your new module and passes values for `name`, `filepath`, and the provider. Use the same values you previously had hard-coded (your first website, `static-page`).
+**Ziel:** Füge einen `module`-Block zu `terraform/main.tf` hinzu, der dein neues Modul aufruft und Werte für `name`, `filepath` und den Provider übergibt. Verwende die gleichen Werte, die du zuvor hartcodiert hattest (deine erste Website, `static-page`).
 
-After adding the module block, run `tf init` first (required whenever you add a new `module` block), then `tf plan` and `tf apply`.
+Nach dem Hinzufügen des Modul-Blocks führe zunächst `tf init` aus (erforderlich, wenn du einen neuen `module`-Block hinzufügst), dann `tf plan` und `tf apply`.
 
-**Terraform documentation:** https://developer.hashicorp.com/terraform/language/modules/syntax
+**Terraform-Dokumentation:** https://developer.hashicorp.com/terraform/language/modules/syntax
 
 <details>
-<summary>Hint</summary>
+<summary>Hinweis</summary>
 
-A module call in `main.tf` looks like this:
+Ein Modulaufruf in `main.tf` sieht so aus:
 
 ```hcl
 module "static_page_1" {
@@ -487,15 +487,15 @@ module "static_page_1" {
 }
 ```
 
-- `source` is the path to the module directory, relative to `main.tf`.
-- `providers` passes the Frankfurt provider alias into the module. The key (`aws.frankfurt`) matches the `configuration_aliases` declaration you added in step 2.2; the value (`aws.frankfurt`) refers to the provider configured in the root `main.tf`.
-- `name` and `filepath` map to the variables you declared in step 2.3.
+- `source` ist der Pfad zum Modulverzeichnis, relativ zu `main.tf`.
+- `providers` übergibt den Frankfurt-Provider-Alias in das Modul. Der Schlüssel (`aws.frankfurt`) entspricht der `configuration_aliases`-Deklaration, die du in Schritt 2.2 hinzugefügt hast; der Wert (`aws.frankfurt`) verweist auf den in der Root-`main.tf` konfigurierten Provider.
+- `name` und `filepath` entsprechen den Variablen, die du in Schritt 2.3 deklariert hast.
 
-**Remember:** `tf init` must be re-run after every new `module` block that introduces a new `source` path. Terraform uses init to register the module.
+**Denk daran:** `tf init` muss nach jedem neuen `module`-Block, der einen neuen `source`-Pfad einführt, erneut ausgeführt werden. Terraform verwendet init, um das Modul zu registrieren.
 
 </details>
 
-If you added an `output` block in step 1.4, move it into `terraform/modules/static-webpage/main.tf`. To expose that output from the root level, add an output block in root `main.tf` that references the module:
+Wenn du in Schritt 1.4 einen `output`-Block hinzugefügt hast, verschiebe ihn in `terraform/modules/static-webpage/main.tf`. Um diesen Output auf Root-Ebene zugänglich zu machen, füge einen Output-Block in der Root-`main.tf` hinzu, der das Modul referenziert:
 
 ```hcl
 output "website_url_1" {
@@ -503,31 +503,31 @@ output "website_url_1" {
 }
 ```
 
-For this to work, the module itself must also declare an `output` block that exposes `website_url`. See: https://developer.hashicorp.com/terraform/language/values/outputs
+Damit dies funktioniert, muss das Modul selbst auch einen `output`-Block deklarieren, der `website_url` exponiert. Siehe: https://developer.hashicorp.com/terraform/language/values/outputs
 
 ---
 
-### 2.5 – Deploy two more websites using the module
+### 2.5 – Zwei weitere Websites mit dem Modul bereitstellen
 
-**Goal:** Add two more `module` blocks to `terraform/main.tf` — one for each of the remaining HTML files:
+**Ziel:** Füge zwei weitere `module`-Blöcke zu `terraform/main.tf` hinzu — einen für jede der verbleibenden HTML-Dateien:
 
 - `../resources/static-page-2/index.html`
 - `../resources/static-page-3/index.html`
 
-Give each module block a unique name (the first argument after `module`) and a unique `name` variable value so the S3 bucket names don't collide.
+Gib jedem Modul-Block einen eindeutigen Namen (das erste Argument nach `module`) und einen eindeutigen `name`-Variablenwert, damit die S3-Bucket-Namen nicht kollidieren.
 
-Run `tf plan` and confirm Terraform plans to create resources for both new websites. Then run `tf apply`.
+Führe `tf plan` aus und bestätige, dass Terraform plant, Ressourcen für beide neuen Websites zu erstellen. Dann führe `tf apply` aus.
 
-**Verify:** Open the website endpoint URL for each of the three buckets. You should see three distinct pages.
+**Überprüfung:** Öffne die Website-Endpunkt-URL für jeden der drei Buckets. Du solltest drei unterschiedliche Seiten sehen.
 
 ---
 
-## Cleanup
+## Aufräumen
 
-When you are done with the workshop, remove all resources you created to avoid ongoing AWS charges:
+Wenn du mit dem Workshop fertig bist, entferne alle erstellten Ressourcen, um laufende AWS-Kosten zu vermeiden:
 
 ```bash
 tf destroy
 ```
 
-Terraform will list everything it is about to delete and ask for confirmation. Type `yes` to proceed. Wait for the destroy to complete before closing your terminal.
+Terraform listet alles auf, was es löschen möchte, und fragt nach einer Bestätigung. Tippe `yes`, um fortzufahren. Warte, bis der Destroy abgeschlossen ist, bevor du dein Terminal schließt.
