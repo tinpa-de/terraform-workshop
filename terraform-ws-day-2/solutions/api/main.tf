@@ -11,7 +11,7 @@ data "aws_iam_role" "api" {
 
 # TODO 1: Lambda-Funktion provisionieren
 # Das Muster kennt ihr aus dem Processor-Modul – schaut dort nach.
-# Unterschiede: function_name endet auf "claims-api-VORNAME", timeout = 15, memory_size = 256.
+# Unterschiede: function_name endet auf "claims-api-jasper", timeout = 15, memory_size = 256.
 # Zusätzliche Env-Variable: BUCKET_NAME = var.bucket_name
 # IAM-Rolle: data.aws_iam_role.api.arn
 #
@@ -52,13 +52,13 @@ resource "aws_apigatewayv2_stage" "default" {
 # WICHTIG: Der Name muss exakt "/aws/lambda/<function_name>" sein –
 # Lambda schreibt Logs automatisch in diese Log Group.
 resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.project}-${var.environment}-claims-api-VORNAME"
+  name              = "/aws/lambda/${var.project}-${var.environment}-claims-api-jasper"
   retention_in_days = 7
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "api" {
-  function_name    = "${var.project}-${var.environment}-claims-api-VORNAME"
+  function_name    = "${var.project}-${var.environment}-claims-api-jasper"
   filename         = data.archive_file.api_lambda.output_path
   source_code_hash = data.archive_file.api_lambda.output_base64sha256
   role             = data.aws_iam_role.api.arn
@@ -86,7 +86,7 @@ resource "aws_lambda_function" "api" {
 # --- API Gateway v2 (HTTP API) ---
 
 resource "aws_apigatewayv2_api" "claims" {
-  name          = "${var.project}-${var.environment}-claims-api-VORNAME"
+  name          = "${var.project}-${var.environment}-claims-api-jasper"
   protocol_type = "HTTP"
   description   = "DEVK Claims Intake API"
 
