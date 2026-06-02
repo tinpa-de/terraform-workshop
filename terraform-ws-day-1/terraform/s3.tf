@@ -41,3 +41,16 @@ data "aws_iam_policy_document" "allow_access_to_bucket" {
     ]
   }
 }
+
+
+resource "aws_s3_bucket_website_configuration" "jasper-workshop-static-page-website-configuration" {
+  bucket = aws_s3_bucket.jasper-workshop-static-page.id
+  provider = aws.frankfurt
+  index_document {
+    suffix = "index.html"
+  }
+}
+
+output "website_url" {
+  value = "http://${aws_s3_bucket_website_configuration.jasper-workshop-static-page-website-configuration.website_endpoint}"
+}
