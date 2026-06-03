@@ -202,6 +202,8 @@ Gestern habt ihr bereits S3-Ressourcen gebaut. Heute geht es einen Schritt weite
 3. Implementiert `modules/storage/main.tf` Ressource für Ressource
 
 ```bash
+# Nach jedem neu-initialisiertem Modul:
+terraform init
 # Nach jeder neuen Ressource testen:
 terraform plan -target=module.storage
 ```
@@ -245,7 +247,7 @@ Der Wert für serverseitige Verschlüsselung ohne eigene Schlüssel lautet `"AES
 - `ignore_public_acls`
 - `restrict_public_buckets`
 
-Alle vier sollen `true` sein. Das ist die sichere Standardkonfiguration für einen Bucket, der nie öffentlich zugänglich sein soll — im Gegensatz zu Tag 1, wo ihr Public Access bewusst aufgemacht habt.
+Alle vier sollen `true` sein. Das ist die sichere Konfiguration für einen Bucket, der nie öffentlich zugänglich sein soll — im Gegensatz zu Tag 1, wo ihr Public Access aufgemacht habt.
 
 </details>
 
@@ -281,11 +283,10 @@ Alle vier sollen `true` sein. Das ist die sichere Standardkonfiguration für ein
 
 Ein `module` Block in Terraform funktioniert wie ein Funktionsaufruf: `source` gibt den Pfad zum Modul an, die übrigen Argumente entsprechen den `variable`-Deklarationen in `modules/storage/variables.tf`. Schaut, welche Variablen das Modul erwartet — und welche Werte aus dem aufrufenden Kontext (`var.*`, `local.*`, `resource.*`) ihr übergeben könnt.
 
-Nach dem Einkommentieren: `terraform init` ist nicht nötig, da das Modul bereits bekannt ist.
-
 </details>
 
 ```bash
+terraform init
 terraform apply -target=module.storage
 ```
 
@@ -330,9 +331,6 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 2. Öffnet `modules/database/outputs.tf` — was soll das Modul zurückgeben?
 3. Implementiert die drei Ressourcen der Reihe nach
 
-```bash
-terraform plan -target=module.database
-```
 
 <details>
 <summary>Hinweis – Ressource 1: DB Subnet Group als data source</summary>
@@ -377,6 +375,10 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance
 
+
+```bash
+terraform plan -target=module.database
+```
 ---
 
 ### Schritt 1.4 – Datenbank deployen
@@ -390,6 +392,7 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 > - IAM-Rolle `devk-dev-api-role` (für die API-Lambda)
 
 ```bash
+terraform init
 terraform apply -target=module.database
 ```
 
@@ -468,6 +471,11 @@ Wichtig: `aws_s3_bucket_notification` muss ein `depends_on` auf `aws_lambda_perm
 
 </details>
 
+**Terraform-Dokumentation:**
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_notification
+
+
 Öffnet danach `envs/dev/main.tf` und `envs/dev/output.tf` und kommentiert den TODO-C-Block ein:
 
 ```hcl
@@ -511,10 +519,6 @@ aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-
 ```
 
 Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schreibt einen Eintrag.
-
-**Terraform-Dokumentation:**
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_notification
 
 ---
 
@@ -562,6 +566,15 @@ Referenziert `data.aws_iam_role.api.arn` für die IAM-Rolle (bereits vorgegeben)
 
 </details>
 
+**Terraform-Dokumentation:**
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_integration
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_route
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
+
+
 ```bash
 terraform plan -target=module.api
 ```
@@ -600,14 +613,6 @@ output "api_log_group" {
 }
 ```
 
-**Terraform-Dokumentation:**
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_integration
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_route
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
-
 ---
 
 ### Schritt 2.4 – API deployen
@@ -615,6 +620,7 @@ output "api_log_group" {
 **Ziel:** Das gesamte Setup vervollständigen.
 
 ```bash
+terraform init
 # Ohne -target – deployed jetzt alles
 terraform apply
 ```
@@ -645,14 +651,16 @@ curl -s -X POST ${API_URL}/claims \
 
 # Alle Claims auflisten
 curl -s ${API_URL}/claims | jq
+```
 
+```bash
 # Einzelnen Claim abrufen (ID aus der POST-Antwort einsetzen)
 curl -s ${API_URL}/claims/CLM-XXXXXXXXXX | jq
 ```
 
 **Presigned URL – der Browser-Upload-Flow:**
 
-Im POST-Response ist eine `upload_url`. Das ist eine AWS Presigned URL – sie erlaubt einem Browser, direkt nach S3 zu uploaden, ohne eigene AWS-Credentials zu haben. Schaut in `lambda-src/api/handler.py` nach, wie sie erzeugt wird.
+Im POST-Response ist eine `upload_url`. Das ist eine AWS Presigned URL – sie erlaubt einem Browser für eine Stunde, direkt nach S3 zu uploaden, ohne eigene AWS-Credentials zu haben. Schaut in `lambda-src/api/handler.py` nach, wie sie erzeugt wird.
 
 ```bash
 # Presigned URL aus der POST-Antwort nehmen und damit direkt hochladen:
