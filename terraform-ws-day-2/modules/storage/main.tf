@@ -26,26 +26,46 @@
 # ---------------------------------------------------------------------------
 
 # TODO 1: S3-Bucket anlegen
-# resource "aws_s3_bucket" "claims" {
-#   ...
-# }
+resource "aws_s3_bucket" "claims" {
+  bucket = "${var.project}-${var.environment}-claims-jasper"
+  tags = var.tags
+}
 
 # TODO 2: Versionierung aktivieren
-# resource "aws_s3_bucket_versioning" "claims" {
-#   ...
-# }
+resource "aws_s3_bucket_versioning" "claims" {
+  bucket = aws_s3_bucket.claims.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 
 # TODO 3: Serverseitige Verschlüsselung (AES256)
-# resource "aws_s3_bucket_server_side_encryption_configuration" "claims" {
-#   ...
-# }
+resource "aws_s3_bucket_server_side_encryption_configuration" "claims" {
+  bucket = aws_s3_bucket.claims.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
 
 # TODO 4: Öffentlichen Zugriff blockieren
-# resource "aws_s3_bucket_public_access_block" "claims" {
-#   ...
-# }
+resource "aws_s3_bucket_public_access_block" "claims" {
+  bucket = aws_s3_bucket.claims.id
+  block_public_acls = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
+}
 
 # TODO 5 (BONUS): Lifecycle-Regel für alte Versionen
-# resource "aws_s3_bucket_lifecycle_configuration" "claims" {
-#   ...
-# }
+resource "aws_s3_bucket_lifecycle_configuration" "claims" {
+  bucket = aws_s3_bucket.claims.id
+  rule {
+    id = "jasper_bucket_lifecycle_configuration"
+    status = "Enabled"
+    noncurrent_version_expiration {
+      noncurrent_days = 90
+    }
+  }
+}

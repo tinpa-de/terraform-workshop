@@ -34,12 +34,12 @@ locals {
 # Schaut euch modules/storage/variables.tf und modules/storage/outputs.tf an.
 # Der Bucket-Name wird später von processor + api gebraucht.
 #
-# module "storage" {
-#   source      = "../../modules/storage"
-#   project     = var.project
-#   environment = var.environment
-#   tags        = local.tags
-# }
+module "storage" {
+  source      = "../../modules/storage"
+  project     = var.project
+  environment = var.environment
+  tags        = local.tags
+}
 
 # TODO B: Datenbank-Modul aufrufen
 # Schaut euch modules/database/variables.tf und modules/database/outputs.tf an.
