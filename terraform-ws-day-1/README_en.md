@@ -323,7 +323,7 @@ A bucket policy is a JSON document defining who can do what with your bucket. Th
 The policy you need grants the following:
 - **Principal:** `"*"` — anyone, including unauthenticated users
 - **Action:** `"s3:GetObject"` — the right to download objects
-- **Resource:** every object in your bucket — the ARN pattern is `"arn:aws:s3:::YOUR_BUCKET_NAME/*"`
+- **Resource:** every object in your bucket — the ARN pattern is `"${aws_s3_bucket.YOUR_LOCAL_BUCKET_NAME.arn}/*"`
 
 Using Terraform's built-in `jsonencode()` function lets you write the JSON as a native HCL map, which avoids quoting issues and is easier to read.
 
