@@ -689,10 +689,11 @@ aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-
 
 > **Wichtig:** Bitte am Ende des Workshops aufräumen – RDS verursacht sonst laufende Kosten.
 
+Der S3 Bucket muss leer sein, um ihn löschen zu können.
+Geht dafür bitte in die [AWS-Konsole](https://856021348966.signin.aws.amazon.com/console), entweder in "Kürzlich besucht" oder in "Alle Services ansehen" in "S3", wählt euren Bucket aus (devk-dev-claims-VORNAME) und klickt auf "Leer" und bestätigt dies. Anschließend könnt ihr mit `terraform destroy` alle Elemente aufräumen.
+
 ```bash
 # S3-Bucket muss leer sein, sonst schlägt destroy fehl
-aws s3 rm s3://$(terraform output -raw s3_bucket) --recursive
-
 terraform destroy
 ```
 
