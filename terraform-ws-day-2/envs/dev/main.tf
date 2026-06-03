@@ -77,16 +77,16 @@ module "processor" {
 }
 
 # TODO D: API-Modul einbinden – erst nach TODO C (database) aktivieren
-# module "api" {
-#   source      = "../../modules/api"
-#   project     = var.project
-#   environment = var.environment
-#   source_dir  = "${path.module}/../../lambda-src/api"
-#   bucket_name = module.storage.bucket_name
-#   bucket_arn  = module.storage.bucket_arn
-#   db_host     = module.database.address
-#   db_name     = module.database.db_name
-#   db_username = var.db_username
-#   db_password = var.db_password
-#   tags        = local.tags
-# }
+module "api" {
+  source      = "../../modules/api"
+  project     = var.project
+  environment = var.environment
+  source_dir  = "${path.module}/../../lambda-src/api"
+  bucket_name = module.storage.bucket_name
+  bucket_arn  = module.storage.bucket_arn
+  db_host     = module.database.address
+  db_name     = module.database.db_name
+  db_username = var.db_username
+  db_password = var.db_password
+  tags        = local.tags
+}

@@ -17,12 +17,12 @@ output "processor_log_group" {
 }
 
 # Wird nach TODO D (api) aktiv:
-# output "api_url" {
-#   description = "Base URL der Claims-API"
-#   value       = module.api.api_endpoint
-# }
+output "api_url" {
+  description = "Base URL der Claims-API"
+  value       = module.api.api_endpoint
+}
 
-# output "api_log_group" {
-#   description = "CloudWatch Log Group der API-Lambda"
-#   value       = module.api.log_group_name
-# }
+output "api_log_group" {
+  description = "CloudWatch Log Group der API-Lambda"
+  value       = module.api.log_group_name
+}
