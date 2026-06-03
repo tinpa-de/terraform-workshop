@@ -321,7 +321,7 @@ Referenziere denselben Bucket, den du in Schritt 1.1 erstellt hast.
 Eine Bucket-Policy ist ein JSON-Dokument, das definiert, wer was mit deinem Bucket tun kann. Die `aws_s3_bucket_policy`-Ressource nimmt ein `policy`-Argument entgegen, das dieses JSON als String enthält.
 
 Die benötigte Policy gewährt Folgendes:
-- **Principal:** `"*"` — alle, einschließlich nicht authentifizierter Benutzer
+- **Principals:** `identifiers = ["*"]`, `type = "*"` — alle, einschließlich nicht authentifizierter Benutzer
 - **Action:** `"s3:GetObject"` — das Recht, Objekte herunterzuladen
 - **Resource:** jedes Objekt in deinem Bucket — das ARN-Muster ist `"${aws_s3_bucket.DEIN_LOKALER_BUCKET_NAME.arn}/*"`
 
