@@ -23,7 +23,8 @@ import pg8000.native
 logger = logging.getLogger()
 logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
 
-s3 = boto3.client("s3")
+_region = os.environ.get("AWS_REGION", "eu-central-1")
+s3 = boto3.client("s3", region_name=_region, endpoint_url=f"https://s3.{_region}.amazonaws.com")
 
 DB_CONFIG = {
     "host": os.environ["DB_HOST"],
@@ -114,7 +115,7 @@ def list_claims(conn):
         "SELECT id, policy_number, claim_type, status, created_at "
         "FROM claims ORDER BY created_at DESC LIMIT 100"
     )
-    columns = [c[0] for c in conn.columns]
+    columns = [c["name"] for c in conn.columns]
     return response(200, {"claims": [dict(zip(columns, row)) for row in rows]})
 
 
@@ -123,7 +124,7 @@ def get_claim(conn, claim_id: str):
     if not rows:
         return response(404, {"error": f"Claim {claim_id} not found"})
 
-    columns = [c[0] for c in conn.columns]
+    columns = [c["name"] for c in conn.columns]
     claim = dict(zip(columns, rows[0]))
 
     doc_rows = conn.run(
@@ -131,7 +132,7 @@ def get_claim(conn, claim_id: str):
         "FROM claim_documents WHERE policy_number = :policy_number ORDER BY uploaded_at DESC",
         policy_number=claim["policy_number"],
     )
-    doc_columns = [c[0] for c in conn.columns]
+    doc_columns = [c["name"] for c in conn.columns]
     documents = [dict(zip(doc_columns, row)) for row in doc_rows]
 
     return response(200, {"claim": claim, "documents": documents})
