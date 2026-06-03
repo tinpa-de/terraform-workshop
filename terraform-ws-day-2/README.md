@@ -339,7 +339,7 @@ terraform plan -target=module.database
 
 Mit `data "aws_db_subnet_group"` referenziert ihr eine bereits existierende Subnet Group — Terraform erstellt nichts, sondern liest nur den Namen aus. Das ist dasselbe Prinzip wie bei der Security Group.
 
-Der Block braucht nur `name` zum Auffinden. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `devk-dev-claims`).
+Der Block braucht nur `name` zum Auffinden. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `{project}-{environment}-claims`).
 
 Referenziert den Namen dann so: `data.aws_db_subnet_group.claims.name`
 
@@ -350,7 +350,7 @@ Referenziert den Namen dann so: `data.aws_db_subnet_group.claims.name`
 
 Mit `data "aws_security_group"` referenziert ihr eine bereits existierende Security Group, ohne sie selbst zu verwalten. Das ist der Unterschied zu `resource`: Terraform erstellt nichts, sondern liest nur die ID aus.
 
-Der Block braucht `name` und `vpc_id` zum Auffinden der SG. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `devk-dev-rds`). Die VPC-ID kommt aus `var.vpc_id`.
+Der Block braucht `name` und `vpc_id` zum Auffinden der SG. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `{project}-{environment}-rds`). Die VPC-ID kommt aus `var.vpc_id`.
 
 Referenziert die ID dann so: `data.aws_security_group.rds.id`
 
@@ -360,7 +360,7 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 <summary>Hinweis – Ressource 3: RDS-Instanz</summary>
 
 `aws_db_instance` hat viele Argumente — für den Workshop sind diese wichtig:
-- `identifier` — eindeutiger Name der Instanz
+- `identifier` — eindeutiger Name der Instanz (Muster: `{project}-{environment}-claims-VORNAME`)
 - `engine = "postgres"`, `engine_version = "16.6"`
 - `instance_class = "db.t3.micro"`, `allocated_storage = 20`
 - `storage_encrypted = true`
@@ -399,7 +399,7 @@ Das dauert ca. 8–10 Minuten. Nutzt die Zeit für die Diskussionspunkte unten.
 
 ```bash
 aws rds describe-db-instances \
-  --db-instance-identifier devk-dev-claims \
+  --db-instance-identifier devk-dev-claims-VORNAME \
   --query "DBInstances[0].DBInstanceStatus" \
   --output text \
   --region eu-central-1
