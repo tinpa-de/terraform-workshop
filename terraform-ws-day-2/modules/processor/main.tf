@@ -52,10 +52,20 @@ resource "aws_lambda_function" "processor" {
 # Ressource 2: aws_s3_bucket_notification
 #   Konfiguriert den Bucket so, dass er bei bestimmten Events die Lambda triggert.
 #
-# resource "aws_lambda_permission" "s3" {
-#   ...
-# }
-#
-# resource "aws_s3_bucket_notification" "trigger" {
-#   ...
-# }
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
+resource "aws_lambda_permission" "s3" {
+  statement_id  = "AllowS3Invoke"
+  function_name = aws_lambda_function.processor.function_name
+  action        = "lambda:InvokeFunction"
+  principal     = "s3.amazonaws.com"
+  source_arn    = var.bucket_arn
+}
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_notification
+resource "aws_s3_bucket_notification" "trigger" {
+  bucket = var.bucket_id
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.processor.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+  depends_on = [aws_lambda_permission.s3]
+}

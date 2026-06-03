@@ -62,19 +62,19 @@ module "database" {
 # =============================================================================
 
 # TODO C: Processor-Modul einbinden – erst nach TODO B (database) aktivieren
-# module "processor" {
-#   source      = "../../modules/processor"
-#   project     = var.project
-#   environment = var.environment
-#   source_dir  = "${path.module}/../../lambda-src/processor"
-#   bucket_id   = module.storage.bucket_id
-#   bucket_arn  = module.storage.bucket_arn
-#   db_host     = module.database.address
-#   db_name     = module.database.db_name
-#   db_username = var.db_username
-#   db_password = var.db_password
-#   tags        = local.tags
-# }
+module "processor" {
+  source      = "../../modules/processor"
+  project     = var.project
+  environment = var.environment
+  source_dir  = "${path.module}/../../lambda-src/processor"
+  bucket_id   = module.storage.bucket_id
+  bucket_arn  = module.storage.bucket_arn
+  db_host     = module.database.address
+  db_name     = module.database.db_name
+  db_username = var.db_username
+  db_password = var.db_password
+  tags        = local.tags
+}
 
 # TODO D: API-Modul einbinden – erst nach TODO C (database) aktivieren
 # module "api" {

@@ -11,10 +11,10 @@ output "rds_endpoint" {
 }
 
 # Wird nach TODO C (processor) aktiv:
-# output "processor_log_group" {
-#   description = "CloudWatch Log Group der Processor-Lambda - zum Debuggen"
-#   value       = module.processor.log_group_name
-# }
+output "processor_log_group" {
+  description = "CloudWatch Log Group der Processor-Lambda - zum Debuggen"
+  value       = module.processor.log_group_name
+}
 
 # Wird nach TODO D (api) aktiv:
 # output "api_url" {
