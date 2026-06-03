@@ -160,14 +160,14 @@ macOS / Linux:
 ```bash
 export AWS_ACCESS_KEY_ID=DEINE_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=DEIN_SECRET_ACCESS_KEY
-export AWS_DEFAULT_REGION=eu-west-1
+export AWS_DEFAULT_REGION=eu-central-1
 ```
 
 Windows (PowerShell):
 ```powershell
 $env:AWS_ACCESS_KEY_ID = "DEINE_ACCESS_KEY_ID"
 $env:AWS_SECRET_ACCESS_KEY = "DEIN_SECRET_ACCESS_KEY"
-$env:AWS_DEFAULT_REGION = "eu-west-1"
+$env:AWS_DEFAULT_REGION = "eu-central-1"
 ```
 
 > Diese Variablen gelten nur für die aktuelle Terminal-Sitzung. Du musst sie jedes Mal neu setzen, wenn du ein neues Terminal-Fenster öffnest. Wenn du später Authentifizierungsfehler erhältst, ist das die erste Stelle, die du überprüfen solltest.
