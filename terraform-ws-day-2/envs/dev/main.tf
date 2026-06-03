@@ -45,16 +45,16 @@ module "storage" {
 # Schaut euch modules/database/variables.tf und modules/database/outputs.tf an.
 # Die DB-Adresse wird später von processor + api gebraucht.
 #
-# module "database" {
-#   source      = "../../modules/database"
-#   project     = var.project
-#   environment = var.environment
-#   vpc_id      = data.aws_vpc.default.id
-#   db_name     = "claims"
-#   db_username = var.db_username
-#   db_password = var.db_password
-#   tags        = local.tags
-# }
+module "database" {
+  source      = "../../modules/database"
+  project     = var.project
+  environment = var.environment
+  vpc_id      = data.aws_vpc.default.id
+  db_name     = "claims"
+  db_username = var.db_username
+  db_password = var.db_password
+  tags        = local.tags
+}
 
 # =============================================================================
 # Part 2: Application – Lambda & API Gateway

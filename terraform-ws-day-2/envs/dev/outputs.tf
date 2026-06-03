@@ -4,11 +4,11 @@ output "s3_bucket" {
 }
 
 # Wird nach TODO B (database) aktiv:
-# output "rds_endpoint" {
-#   description = "RDS-Endpoint (für psql, optional)"
-#   value       = module.database.endpoint
-#   sensitive   = true
-# }
+output "rds_endpoint" {
+  description = "RDS-Endpoint (für psql, optional)"
+  value       = module.database.endpoint
+  sensitive   = true
+}
 
 # Wird nach TODO C (processor) aktiv:
 # output "processor_log_group" {
