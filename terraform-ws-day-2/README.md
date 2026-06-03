@@ -187,13 +187,13 @@ Gestern habt ihr bereits S3-Ressourcen gebaut. Heute geht es einen Schritt weite
 
 **Anforderungen:**
 
-| # | Was | Warum |
-|---|-----|-------|
-| 1 | S3-Bucket mit Name `{project}-{environment}-claims-{suffix}` | Eindeutiger Name im globalen S3-Namespace |
-| 2 | Versionierung aktivieren | Dokumente dürfen nicht verloren gehen |
-| 3 | Verschlüsselung mit AES256 | Daten at-rest verschlüsseln (DSGVO) |
-| 4 | Public Access Block (alle 4 Flags = true) | Bucket darf nie öffentlich zugänglich sein |
-| 5 | Lifecycle-Regel (Bonus) | Alte Versionen nach 90 Tagen löschen |
+| # | Was                                                           | Warum |
+|---|---------------------------------------------------------------|-------|
+| 1 | S3-Bucket mit Name `{project}-{environment}-claims-{VORNAME}` | Eindeutiger Name im globalen S3-Namespace |
+| 2 | Versionierung aktivieren                                      | Dokumente dürfen nicht verloren gehen |
+| 3 | Verschlüsselung mit AES256                                    | Daten at-rest verschlüsseln (DSGVO) |
+| 4 | Public Access Block (alle 4 Flags = true)                     | Bucket darf nie öffentlich zugänglich sein |
+| 5 | Lifecycle-Regel (Bonus)                                       | Alte Versionen nach 90 Tagen löschen |
 
 **Wo anfangen:**
 
