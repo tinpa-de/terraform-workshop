@@ -381,7 +381,7 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 
 ### Schritt 1.4 – Datenbank deployen
 
-**Ziel:** Das Datenbank-Modul in `envs/dev/main.tf` einbinden (TODO B) und deployen.
+**Ziel:** Das Datenbank-Modul in `envs/dev/main.tf` und `envs/dev/outputs.tf` einbinden (TODO B) und deployen.
 
 > **Hinweis:** Folgende Ressourcen wurden vorab vom Admin angelegt — Terraform sucht sie per Name, ihr müsst nichts erstellen:
 > - DB Subnet Group `devk-dev-claims` (für RDS)
@@ -468,7 +468,7 @@ Wichtig: `aws_s3_bucket_notification` muss ein `depends_on` auf `aws_lambda_perm
 
 </details>
 
-Öffnet danach `envs/dev/main.tf` und kommentiert den TODO-C-Block ein, und in `envs/dev/outputs.tf` den `processor_log_group`-Output:
+Öffnet danach `envs/dev/main.tf` und `envs/dev/output.tf` und kommentiert den TODO-C-Block ein:
 
 ```hcl
 module "processor" {
@@ -494,6 +494,7 @@ output "processor_log_group" {
 ```
 
 ```bash
+terraform init
 terraform apply -target=module.processor
 ```
 
