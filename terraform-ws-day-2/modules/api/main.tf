@@ -19,7 +19,7 @@ data "aws_iam_role" "api" {
 # Lambda schreibt Logs automatisch in diese Log Group.
 #
 resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
+  name              = "/aws/lambda/${var.project}-${var.environment}-claims-api-jasper"
   retention_in_days = 7
   tags              = var.tags
 }
