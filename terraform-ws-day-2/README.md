@@ -544,7 +544,9 @@ Schaut auch in `lambda-src/api/handler.py` — wie werden Routen gematcht, wie w
 <details>
 <summary>Hinweis – TODO 1: Lambda-Funktion</summary>
 
-Das Muster ist identisch zum Processor-Modul. Die Unterschiede:
+Die `cloudwatch_log_group` benötigt `name`, der exakt der Name der Lambda-Funktion sein muss, `retention_in_days = 7` und `tags`
+
+Das Muster für die Lambda-Funktion ist analog zum Processor-Modul. Die Unterschiede:
 - `function_name` endet auf `"claims-api"`
 - `timeout = 15` (kürzer als Processor)
 - Zusätzliche Env-Variable: `BUCKET_NAME = var.bucket_name`
@@ -558,9 +560,9 @@ Referenziert `data.aws_iam_role.api.arn` für die IAM-Rolle (bereits vorgegeben)
 
 **`aws_apigatewayv2_api`**: Braucht `name`, `protocol_type = "HTTP"` und einen `cors_configuration`-Block (damit Browser-Requests funktionieren). Erlaubt Origins `["*"]`, Methods `["GET", "POST", "OPTIONS"]`, Headers `["Content-Type"]`.
 
-**`aws_apigatewayv2_integration`**: Verbindet die API mit der Lambda. `integration_type = "AWS_PROXY"`, `integration_uri` ist die `invoke_arn` der Lambda-Funktion, `payload_format_version = "2.0"`.
+**`aws_apigatewayv2_integration`**: Verbindet die API mit der Lambda. `integration_type = "AWS_PROXY"`,`api_id = aws_apigatewayv2_api.claims.id`, `integration_uri` ist die `invoke_arn` der Lambda-Funktion, `payload_format_version = "2.0"`.
 
-**`aws_apigatewayv2_route`**: Jede Route braucht `api_id`, einen `route_key` (z.B. `"POST /claims"`) und `target` — das Format ist `"integrations/${aws_apigatewayv2_integration.lambda.id}"`. Legt drei Routen an: `POST /claims`, `GET /claims`, `GET /claims/{id}`.
+**`aws_apigatewayv2_route`**: Jede Route braucht wieder die `api_id`, einen `route_key` (z.B. `"POST /claims"`) und `target` — das Format ist `"integrations/${aws_apigatewayv2_integration.lambda.id}"`. Legt drei Routen an: `POST /claims`, `GET /claims`, `GET /claims/{id}`.
 
 **`aws_lambda_permission`**: Selbes Muster wie beim S3-Trigger, aber `principal = "apigateway.amazonaws.com"` und `source_arn = "${aws_apigatewayv2_api.claims.execution_arn}/*/*"`.
 
@@ -629,6 +631,11 @@ Die API-URL ausgeben:
 
 ```bash
 terraform output -raw api_url
+```
+
+Falls du an irgendeinem Punkt in die API-Logs schauen willst, machst du das mit
+```bash
+aws logs tail $(terraform output -raw api_log_group) --follow --region eu-central-1
 ```
 
 ---
