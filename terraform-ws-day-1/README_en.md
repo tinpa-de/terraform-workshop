@@ -309,7 +309,7 @@ Both require their own Terraform resource. After applying both, any internet use
 <details>
 <summary>Hint — disabling Block Public Access</summary>
 
-`aws_s3_bucket_public_access_block` has four boolean arguments — `block_public_acls`, `block_public_policy`, `ignore_public_acls`, and `restrict_public_buckets` — all of which default to `true` (everything blocked). Set all four to `false` to lift the restriction entirely.
+`aws_s3_bucket_public_access_block` has four boolean arguments — `block_public_acls`, `block_public_policy`, `ignore_public_acls`, and `restrict_public_buckets` — all of which default to `false` (nothing is blocked). Set all four to `false` or leave them out entirely.
 
 Reference the same bucket you created in step 1.1.
 

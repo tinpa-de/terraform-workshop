@@ -309,7 +309,7 @@ Beide erfordern ihre eigene Terraform-Ressource. Nach dem Apply sollte jeder Int
 <details>
 <summary>Hinweis — Block Public Access deaktivieren</summary>
 
-`aws_s3_bucket_public_access_block` hat vier boolesche Argumente — `block_public_acls`, `block_public_policy`, `ignore_public_acls` und `restrict_public_buckets` — die alle standardmäßig `true` (alles blockiert) sind. Setze alle vier auf `false`, um die Einschränkung vollständig aufzuheben.
+`aws_s3_bucket_public_access_block` hat vier boolesche Argumente — `block_public_acls`, `block_public_policy`, `ignore_public_acls` und `restrict_public_buckets` — die alle standardmäßig `false` (nichts blockiert) sind. Du kannst sie entweder trotzdem deklarieren und auf `false` setzen oder weglassen.
 
 Referenziere denselben Bucket, den du in Schritt 1.1 erstellt hast.
 
