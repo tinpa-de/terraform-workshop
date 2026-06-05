@@ -187,13 +187,13 @@ Gestern habt ihr bereits S3-Ressourcen gebaut. Heute geht es einen Schritt weite
 
 **Anforderungen:**
 
-| # | Was | Warum |
-|---|-----|-------|
-| 1 | S3-Bucket mit Name `{project}-{environment}-claims-{suffix}` | Eindeutiger Name im globalen S3-Namespace |
-| 2 | Versionierung aktivieren | Dokumente dürfen nicht verloren gehen |
-| 3 | Verschlüsselung mit AES256 | Daten at-rest verschlüsseln (DSGVO) |
-| 4 | Public Access Block (alle 4 Flags = true) | Bucket darf nie öffentlich zugänglich sein |
-| 5 | Lifecycle-Regel (Bonus) | Alte Versionen nach 90 Tagen löschen |
+| # | Was                                                           | Warum |
+|---|---------------------------------------------------------------|-------|
+| 1 | S3-Bucket mit Name `{project}-{environment}-claims-{VORNAME}` | Eindeutiger Name im globalen S3-Namespace |
+| 2 | Versionierung aktivieren                                      | Dokumente dürfen nicht verloren gehen |
+| 3 | Verschlüsselung mit AES256                                    | Daten at-rest verschlüsseln (DSGVO) |
+| 4 | Public Access Block (alle 4 Flags = true)                     | Bucket darf nie öffentlich zugänglich sein |
+| 5 | Lifecycle-Regel (Bonus)                                       | Alte Versionen nach 90 Tagen löschen |
 
 **Wo anfangen:**
 
@@ -202,6 +202,8 @@ Gestern habt ihr bereits S3-Ressourcen gebaut. Heute geht es einen Schritt weite
 3. Implementiert `modules/storage/main.tf` Ressource für Ressource
 
 ```bash
+# Nach jedem neu-initialisiertem Modul:
+terraform init
 # Nach jeder neuen Ressource testen:
 terraform plan -target=module.storage
 ```
@@ -211,7 +213,7 @@ terraform plan -target=module.storage
 <details>
 <summary>Hinweis – Ressource 1: S3-Bucket</summary>
 
-`aws_s3_bucket` braucht ein `bucket` Argument für den Namen. Bucket-Namen müssen global eindeutig sein — baut ihn aus den Variablen zusammen, die euch zur Verfügung stehen: `var.project`, `var.environment` und `var.suffix`. Terraform-Stringinterpolation funktioniert so: `"${var.project}-weiterer-text"`. Setzt außerdem `tags = var.tags`.
+`aws_s3_bucket` braucht ein `bucket` Argument für den Namen. Bucket-Namen müssen global eindeutig sein — baut ihn aus den Variablen zusammen, die euch zur Verfügung stehen: `var.project` und `var.environment`. Terraform-Stringinterpolation funktioniert so: `"${var.project}-weiterer-text"`. Setzt außerdem `tags = var.tags`.
 
 Schaut in `variables.tf`, welche Variablen das Modul bekommt — ihr müsst nichts hart codieren.
 
@@ -245,7 +247,7 @@ Der Wert für serverseitige Verschlüsselung ohne eigene Schlüssel lautet `"AES
 - `ignore_public_acls`
 - `restrict_public_buckets`
 
-Alle vier sollen `true` sein. Das ist die sichere Standardkonfiguration für einen Bucket, der nie öffentlich zugänglich sein soll — im Gegensatz zu Tag 1, wo ihr Public Access bewusst aufgemacht habt.
+Alle vier sollen `true` sein. Das ist die sichere Konfiguration für einen Bucket, der nie öffentlich zugänglich sein soll — im Gegensatz zu Tag 1, wo ihr Public Access aufgemacht habt.
 
 </details>
 
@@ -281,11 +283,10 @@ Alle vier sollen `true` sein. Das ist die sichere Standardkonfiguration für ein
 
 Ein `module` Block in Terraform funktioniert wie ein Funktionsaufruf: `source` gibt den Pfad zum Modul an, die übrigen Argumente entsprechen den `variable`-Deklarationen in `modules/storage/variables.tf`. Schaut, welche Variablen das Modul erwartet — und welche Werte aus dem aufrufenden Kontext (`var.*`, `local.*`, `resource.*`) ihr übergeben könnt.
 
-Nach dem Einkommentieren: `terraform init` ist nicht nötig, da das Modul bereits bekannt ist.
-
 </details>
 
 ```bash
+terraform init
 terraform apply -target=module.storage
 ```
 
@@ -330,16 +331,13 @@ aws s3api get-bucket-versioning --bucket ${BUCKET}
 2. Öffnet `modules/database/outputs.tf` — was soll das Modul zurückgeben?
 3. Implementiert die drei Ressourcen der Reihe nach
 
-```bash
-terraform plan -target=module.database
-```
 
 <details>
 <summary>Hinweis – Ressource 1: DB Subnet Group als data source</summary>
 
 Mit `data "aws_db_subnet_group"` referenziert ihr eine bereits existierende Subnet Group — Terraform erstellt nichts, sondern liest nur den Namen aus. Das ist dasselbe Prinzip wie bei der Security Group.
 
-Der Block braucht nur `name` zum Auffinden. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `devk-dev-claims`).
+Der Block braucht nur `name` zum Auffinden. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `{project}-{environment}-claims`).
 
 Referenziert den Namen dann so: `data.aws_db_subnet_group.claims.name`
 
@@ -350,7 +348,7 @@ Referenziert den Namen dann so: `data.aws_db_subnet_group.claims.name`
 
 Mit `data "aws_security_group"` referenziert ihr eine bereits existierende Security Group, ohne sie selbst zu verwalten. Das ist der Unterschied zu `resource`: Terraform erstellt nichts, sondern liest nur die ID aus.
 
-Der Block braucht `name` und `vpc_id` zum Auffinden der SG. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `devk-dev-rds`). Die VPC-ID kommt aus `var.vpc_id`.
+Der Block braucht `name` und `vpc_id` zum Auffinden der SG. Den Namen könnt ihr aus `var.project` und `var.environment` zusammensetzen (Muster: `{project}-{environment}-rds`). Die VPC-ID kommt aus `var.vpc_id`.
 
 Referenziert die ID dann so: `data.aws_security_group.rds.id`
 
@@ -360,7 +358,7 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 <summary>Hinweis – Ressource 3: RDS-Instanz</summary>
 
 `aws_db_instance` hat viele Argumente — für den Workshop sind diese wichtig:
-- `identifier` — eindeutiger Name der Instanz
+- `identifier` — eindeutiger Name der Instanz (Muster: `{project}-{environment}-claims-VORNAME`)
 - `engine = "postgres"`, `engine_version = "16.6"`
 - `instance_class = "db.t3.micro"`, `allocated_storage = 20`
 - `storage_encrypted = true`
@@ -377,11 +375,15 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group
 - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance
 
+
+```bash
+terraform plan -target=module.database
+```
 ---
 
 ### Schritt 1.4 – Datenbank deployen
 
-**Ziel:** Das Datenbank-Modul in `envs/dev/main.tf` einbinden (TODO B) und deployen.
+**Ziel:** Das Datenbank-Modul in `envs/dev/main.tf` und `envs/dev/outputs.tf` einbinden (TODO B) und deployen.
 
 > **Hinweis:** Folgende Ressourcen wurden vorab vom Admin angelegt — Terraform sucht sie per Name, ihr müsst nichts erstellen:
 > - DB Subnet Group `devk-dev-claims` (für RDS)
@@ -390,6 +392,7 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 > - IAM-Rolle `devk-dev-api-role` (für die API-Lambda)
 
 ```bash
+terraform init
 terraform apply -target=module.database
 ```
 
@@ -399,7 +402,7 @@ Das dauert ca. 8–10 Minuten. Nutzt die Zeit für die Diskussionspunkte unten.
 
 ```bash
 aws rds describe-db-instances \
-  --db-instance-identifier devk-dev-claims \
+  --db-instance-identifier devk-dev-claims-VORNAME \
   --query "DBInstances[0].DBInstanceStatus" \
   --output text \
   --region eu-central-1
@@ -468,7 +471,12 @@ Wichtig: `aws_s3_bucket_notification` muss ein `depends_on` auf `aws_lambda_perm
 
 </details>
 
-Öffnet danach `envs/dev/main.tf` und kommentiert den TODO-C-Block ein, und in `envs/dev/outputs.tf` den `processor_log_group`-Output:
+**Terraform-Dokumentation:**
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_notification
+
+
+Öffnet danach `envs/dev/main.tf` und `envs/dev/output.tf` und kommentiert den TODO-C-Block ein:
 
 ```hcl
 module "processor" {
@@ -494,6 +502,7 @@ output "processor_log_group" {
 ```
 
 ```bash
+terraform init
 terraform apply -target=module.processor
 ```
 
@@ -510,10 +519,6 @@ aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-
 ```
 
 Ihr solltet sehen: Lambda empfängt das S3-Event, legt die Tabelle an und schreibt einen Eintrag.
-
-**Terraform-Dokumentation:**
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_notification
 
 ---
 
@@ -539,7 +544,9 @@ Schaut auch in `lambda-src/api/handler.py` — wie werden Routen gematcht, wie w
 <details>
 <summary>Hinweis – TODO 1: Lambda-Funktion</summary>
 
-Das Muster ist identisch zum Processor-Modul. Die Unterschiede:
+Die `cloudwatch_log_group` benötigt `name`, der exakt der Name der Lambda-Funktion sein muss, `retention_in_days = 7` und `tags`
+
+Das Muster für die Lambda-Funktion ist analog zum Processor-Modul. Die Unterschiede:
 - `function_name` endet auf `"claims-api"`
 - `timeout = 15` (kürzer als Processor)
 - Zusätzliche Env-Variable: `BUCKET_NAME = var.bucket_name`
@@ -553,13 +560,22 @@ Referenziert `data.aws_iam_role.api.arn` für die IAM-Rolle (bereits vorgegeben)
 
 **`aws_apigatewayv2_api`**: Braucht `name`, `protocol_type = "HTTP"` und einen `cors_configuration`-Block (damit Browser-Requests funktionieren). Erlaubt Origins `["*"]`, Methods `["GET", "POST", "OPTIONS"]`, Headers `["Content-Type"]`.
 
-**`aws_apigatewayv2_integration`**: Verbindet die API mit der Lambda. `integration_type = "AWS_PROXY"`, `integration_uri` ist die `invoke_arn` der Lambda-Funktion, `payload_format_version = "2.0"`.
+**`aws_apigatewayv2_integration`**: Verbindet die API mit der Lambda. `integration_type = "AWS_PROXY"`,`api_id = aws_apigatewayv2_api.claims.id`, `integration_uri` ist die `invoke_arn` der Lambda-Funktion, `payload_format_version = "2.0"`.
 
-**`aws_apigatewayv2_route`**: Jede Route braucht `api_id`, einen `route_key` (z.B. `"POST /claims"`) und `target` — das Format ist `"integrations/${aws_apigatewayv2_integration.lambda.id}"`. Legt drei Routen an: `POST /claims`, `GET /claims`, `GET /claims/{id}`.
+**`aws_apigatewayv2_route`**: Jede Route braucht wieder die `api_id`, einen `route_key` (z.B. `"POST /claims"`) und `target` — das Format ist `"integrations/${aws_apigatewayv2_integration.lambda.id}"`. Legt drei Routen an: `POST /claims`, `GET /claims`, `GET /claims/{id}`.
 
 **`aws_lambda_permission`**: Selbes Muster wie beim S3-Trigger, aber `principal = "apigateway.amazonaws.com"` und `source_arn = "${aws_apigatewayv2_api.claims.execution_arn}/*/*"`.
 
 </details>
+
+**Terraform-Dokumentation:**
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_integration
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_route
+- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
+
 
 ```bash
 terraform plan -target=module.api
@@ -599,14 +615,6 @@ output "api_log_group" {
 }
 ```
 
-**Terraform-Dokumentation:**
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_integration
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_route
-- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
-
 ---
 
 ### Schritt 2.4 – API deployen
@@ -614,6 +622,7 @@ output "api_log_group" {
 **Ziel:** Das gesamte Setup vervollständigen.
 
 ```bash
+terraform init
 # Ohne -target – deployed jetzt alles
 terraform apply
 ```
@@ -622,6 +631,11 @@ Die API-URL ausgeben:
 
 ```bash
 terraform output -raw api_url
+```
+
+Falls du an irgendeinem Punkt in die API-Logs schauen willst, machst du das mit
+```bash
+aws logs tail $(terraform output -raw api_log_group) --follow --region eu-central-1
 ```
 
 ---
@@ -644,14 +658,16 @@ curl -s -X POST ${API_URL}/claims \
 
 # Alle Claims auflisten
 curl -s ${API_URL}/claims | jq
+```
 
+```bash
 # Einzelnen Claim abrufen (ID aus der POST-Antwort einsetzen)
 curl -s ${API_URL}/claims/CLM-XXXXXXXXXX | jq
 ```
 
 **Presigned URL – der Browser-Upload-Flow:**
 
-Im POST-Response ist eine `upload_url`. Das ist eine AWS Presigned URL – sie erlaubt einem Browser, direkt nach S3 zu uploaden, ohne eigene AWS-Credentials zu haben. Schaut in `lambda-src/api/handler.py` nach, wie sie erzeugt wird.
+Im POST-Response ist eine `upload_url`. Das ist eine AWS Presigned URL – sie erlaubt einem Browser für eine Stunde, direkt nach S3 zu uploaden, ohne eigene AWS-Credentials zu haben. Schaut in `lambda-src/api/handler.py` nach, wie sie erzeugt wird.
 
 ```bash
 # Presigned URL aus der POST-Antwort nehmen und damit direkt hochladen:
@@ -673,10 +689,11 @@ aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-
 
 > **Wichtig:** Bitte am Ende des Workshops aufräumen – RDS verursacht sonst laufende Kosten.
 
+Der S3 Bucket muss leer sein, um ihn löschen zu können.
+Geht dafür bitte in die [AWS-Konsole](https://856021348966.signin.aws.amazon.com/console), entweder in "Kürzlich besucht" oder in "Alle Services ansehen" in "S3", wählt euren Bucket aus (devk-dev-claims-VORNAME) und klickt auf "Leer" und bestätigt dies. Anschließend könnt ihr mit `terraform destroy` alle Elemente aufräumen.
+
 ```bash
 # S3-Bucket muss leer sein, sonst schlägt destroy fehl
-aws s3 rm s3://$(terraform output -raw s3_bucket) --recursive
-
 terraform destroy
 ```
 

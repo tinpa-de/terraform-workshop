@@ -160,14 +160,14 @@ macOS / Linux:
 ```bash
 export AWS_ACCESS_KEY_ID=DEINE_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=DEIN_SECRET_ACCESS_KEY
-export AWS_DEFAULT_REGION=eu-west-1
+export AWS_DEFAULT_REGION=eu-central-1
 ```
 
 Windows (PowerShell):
 ```powershell
 $env:AWS_ACCESS_KEY_ID = "DEINE_ACCESS_KEY_ID"
 $env:AWS_SECRET_ACCESS_KEY = "DEIN_SECRET_ACCESS_KEY"
-$env:AWS_DEFAULT_REGION = "eu-west-1"
+$env:AWS_DEFAULT_REGION = "eu-central-1"
 ```
 
 > Diese Variablen gelten nur für die aktuelle Terminal-Sitzung. Du musst sie jedes Mal neu setzen, wenn du ein neues Terminal-Fenster öffnest. Wenn du später Authentifizierungsfehler erhältst, ist das die erste Stelle, die du überprüfen solltest.
@@ -309,7 +309,7 @@ Beide erfordern ihre eigene Terraform-Ressource. Nach dem Apply sollte jeder Int
 <details>
 <summary>Hinweis — Block Public Access deaktivieren</summary>
 
-`aws_s3_bucket_public_access_block` hat vier boolesche Argumente — `block_public_acls`, `block_public_policy`, `ignore_public_acls` und `restrict_public_buckets` — die alle standardmäßig `true` (alles blockiert) sind. Setze alle vier auf `false`, um die Einschränkung vollständig aufzuheben.
+`aws_s3_bucket_public_access_block` hat vier boolesche Argumente — `block_public_acls`, `block_public_policy`, `ignore_public_acls` und `restrict_public_buckets` — die alle standardmäßig `false` (nichts blockiert) sind. Du kannst sie entweder trotzdem deklarieren und auf `false` setzen oder weglassen.
 
 Referenziere denselben Bucket, den du in Schritt 1.1 erstellt hast.
 
@@ -321,9 +321,9 @@ Referenziere denselben Bucket, den du in Schritt 1.1 erstellt hast.
 Eine Bucket-Policy ist ein JSON-Dokument, das definiert, wer was mit deinem Bucket tun kann. Die `aws_s3_bucket_policy`-Ressource nimmt ein `policy`-Argument entgegen, das dieses JSON als String enthält.
 
 Die benötigte Policy gewährt Folgendes:
-- **Principal:** `"*"` — alle, einschließlich nicht authentifizierter Benutzer
+- **Principals:** `identifiers = ["*"]`, `type = "*"` — alle, einschließlich nicht authentifizierter Benutzer
 - **Action:** `"s3:GetObject"` — das Recht, Objekte herunterzuladen
-- **Resource:** jedes Objekt in deinem Bucket — das ARN-Muster ist `"arn:aws:s3:::DEIN_BUCKET_NAME/*"`
+- **Resource:** jedes Objekt in deinem Bucket — das ARN-Muster ist `"${aws_s3_bucket.DEIN_LOKALER_BUCKET_NAME.arn}/*"`
 
 Die Verwendung der eingebauten `jsonencode()`-Funktion von Terraform ermöglicht es dir, das JSON als native HCL-Map zu schreiben, was Probleme mit Anführungszeichen vermeidet und leichter zu lesen ist.
 

@@ -160,14 +160,14 @@ macOS / Linux:
 ```bash
 export AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY
-export AWS_DEFAULT_REGION=eu-west-1
+export AWS_DEFAULT_REGION=eu-central-1
 ```
 
 Windows (PowerShell):
 ```powershell
 $env:AWS_ACCESS_KEY_ID = "YOUR_ACCESS_KEY_ID"
 $env:AWS_SECRET_ACCESS_KEY = "YOUR_SECRET_ACCESS_KEY"
-$env:AWS_DEFAULT_REGION = "eu-west-1"
+$env:AWS_DEFAULT_REGION = "eu-central-1"
 ```
 
 > These variables are only set for the current terminal session. You will need to set them again every time you open a new terminal window. If you encounter authentication errors later, this is the first thing to check.
@@ -309,7 +309,7 @@ Both require their own Terraform resource. After applying both, any internet use
 <details>
 <summary>Hint — disabling Block Public Access</summary>
 
-`aws_s3_bucket_public_access_block` has four boolean arguments — `block_public_acls`, `block_public_policy`, `ignore_public_acls`, and `restrict_public_buckets` — all of which default to `true` (everything blocked). Set all four to `false` to lift the restriction entirely.
+`aws_s3_bucket_public_access_block` has four boolean arguments — `block_public_acls`, `block_public_policy`, `ignore_public_acls`, and `restrict_public_buckets` — all of which default to `false` (nothing is blocked). Set all four to `false` or leave them out entirely.
 
 Reference the same bucket you created in step 1.1.
 
@@ -321,9 +321,9 @@ Reference the same bucket you created in step 1.1.
 A bucket policy is a JSON document defining who can do what with your bucket. The `aws_s3_bucket_policy` resource takes a `policy` argument containing that JSON as a string.
 
 The policy you need grants the following:
-- **Principal:** `"*"` — anyone, including unauthenticated users
+-  **Principals:** `identifiers = ["*"]`, `type = "*"` — anyone, including unauthenticated users
 - **Action:** `"s3:GetObject"` — the right to download objects
-- **Resource:** every object in your bucket — the ARN pattern is `"arn:aws:s3:::YOUR_BUCKET_NAME/*"`
+- **Resource:** every object in your bucket — the ARN pattern is `"${aws_s3_bucket.YOUR_LOCAL_BUCKET_NAME.arn}/*"`
 
 Using Terraform's built-in `jsonencode()` function lets you write the JSON as a native HCL map, which avoids quoting issues and is easier to read.
 

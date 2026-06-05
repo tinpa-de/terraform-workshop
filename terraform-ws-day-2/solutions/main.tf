@@ -15,10 +15,6 @@ provider "aws" {
   region = var.region
 }
 
-resource "random_id" "suffix" {
-  byte_length = 4
-}
-
 data "aws_vpc" "default" {
   default = true
 }
@@ -45,7 +41,6 @@ module "storage" {
   source      = "../../modules/storage"
   project     = var.project
   environment = var.environment
-  suffix      = random_id.suffix.hex
   tags        = local.tags
 }
 

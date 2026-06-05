@@ -17,7 +17,7 @@ terraform apply                         # Änderungen anwenden (mit Bestätigung
 terraform apply tfplan                  # Gespeicherten Plan anwenden
 terraform apply -auto-approve           # Ohne Nachfrage (Vorsicht!)
 terraform apply -target=module.storage  # Nur ein Modul anwenden
-terraform apply -var="region=eu-west-1" # Variable überschreiben
+terraform apply -var="region=eu-central-1" # Variable überschreiben
 ```
 
 ### Zerstören
