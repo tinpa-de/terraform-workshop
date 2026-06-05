@@ -7,13 +7,13 @@ terraform {
   }
 }
 
-resource "aws_s3_bucket" "jasper-workshop-static-page" {
+resource "aws_s3_bucket" "workshop-static-page" {
   bucket   = "workshop-${var.name}"
   provider = aws.frankfurt
 }
 
-resource "aws_s3_object" "jasper-workshop-static-page-index" {
-  bucket       = aws_s3_bucket.jasper-workshop-static-page.id
+resource "aws_s3_object" "workshop-static-page-index" {
+  bucket       = aws_s3_bucket.workshop-static-page.id
   provider     = aws.frankfurt
   key          = "index.html"
   source       = var.filepath
@@ -21,8 +21,8 @@ resource "aws_s3_object" "jasper-workshop-static-page-index" {
   etag         = filemd5(var.filepath)
 }
 
-resource "aws_s3_bucket_public_access_block" "jasper-workshop-static-page-public-access-block" {
-  bucket   = aws_s3_bucket.jasper-workshop-static-page.id
+resource "aws_s3_bucket_public_access_block" "workshop-static-page-public-access-block" {
+  bucket   = aws_s3_bucket.workshop-static-page.id
   provider = aws.frankfurt
 
   block_public_acls       = false
@@ -31,11 +31,11 @@ resource "aws_s3_bucket_public_access_block" "jasper-workshop-static-page-public
   restrict_public_buckets = false
 }
 
-resource "aws_s3_bucket_policy" "jasper-workshop-static-page-policy" {
-  bucket     = aws_s3_bucket.jasper-workshop-static-page.id
+resource "aws_s3_bucket_policy" "workshop-static-page-policy" {
+  bucket     = aws_s3_bucket.workshop-static-page.id
   provider   = aws.frankfurt
   policy     = data.aws_iam_policy_document.allow_access_to_bucket.json
-  depends_on = [aws_s3_bucket_public_access_block.jasper-workshop-static-page-public-access-block]
+  depends_on = [aws_s3_bucket_public_access_block.workshop-static-page-public-access-block]
 }
 
 data "aws_iam_policy_document" "allow_access_to_bucket" {
@@ -51,14 +51,14 @@ data "aws_iam_policy_document" "allow_access_to_bucket" {
     ]
 
     resources = [
-      "${aws_s3_bucket.jasper-workshop-static-page.arn}/*"
+      "${aws_s3_bucket.workshop-static-page.arn}/*"
     ]
   }
 }
 
 
-resource "aws_s3_bucket_website_configuration" "jasper-workshop-static-page-website-configuration" {
-  bucket   = aws_s3_bucket.jasper-workshop-static-page.id
+resource "aws_s3_bucket_website_configuration" "workshop-static-page-website-configuration" {
+  bucket   = aws_s3_bucket.workshop-static-page.id
   provider = aws.frankfurt
   index_document {
     suffix = "index.html"
@@ -66,5 +66,5 @@ resource "aws_s3_bucket_website_configuration" "jasper-workshop-static-page-webs
 }
 
 output "website_url" {
-  value = "http://${aws_s3_bucket_website_configuration.jasper-workshop-static-page-website-configuration.website_endpoint}"
+  value = "http://${aws_s3_bucket_website_configuration.workshop-static-page-website-configuration.website_endpoint}"
 }
