@@ -213,7 +213,7 @@ terraform plan -target=module.storage
 <details>
 <summary>Hinweis – Ressource 1: S3-Bucket</summary>
 
-`aws_s3_bucket` braucht ein `bucket` Argument für den Namen. Bucket-Namen müssen global eindeutig sein — baut ihn aus den Variablen zusammen, die euch zur Verfügung stehen: `var.project`, `var.environment` und `var.suffix`. Terraform-Stringinterpolation funktioniert so: `"${var.project}-weiterer-text"`. Setzt außerdem `tags = var.tags`.
+`aws_s3_bucket` braucht ein `bucket` Argument für den Namen. Bucket-Namen müssen global eindeutig sein — baut ihn aus den Variablen zusammen, die euch zur Verfügung stehen: `var.project` und `var.environment`. Terraform-Stringinterpolation funktioniert so: `"${var.project}-weiterer-text"`. Setzt außerdem `tags = var.tags`.
 
 Schaut in `variables.tf`, welche Variablen das Modul bekommt — ihr müsst nichts hart codieren.
 

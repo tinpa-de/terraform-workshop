@@ -127,7 +127,7 @@ Copy-Item envs/dev/terraform.tfvars.example envs/dev/terraform.tfvars
 
 Open `envs/dev/terraform.tfvars` in your editor and replace `PleaseSetAStrongPasswordHere!` with your own password. The file is in `.gitignore` — it will never be checked into the repository.
 
-> **Important:** Search `envs/dev/main.tf` and all modules (`modules/storage/main.tf`, `modules/database/main.tf`, `modules/processor/main.tf`, `modules/api/main.tf`) for the placeholder `FIRSTNAME` and replace it with your first name (e.g. `anna`). This ensures that your resources get unique names and don't conflict with those of other participants.
+> **Important:** Search `envs/dev/main.tf` and all modules (`modules/storage/main.tf`, `modules/database/main.tf`, `modules/processor/main.tf`, `modules/api/main.tf`) for the placeholder `VORNAME` and replace it with your first name (e.g. `anna`). This ensures that your resources get unique names and don't conflict with those of other participants.
 
 Also install the Python dependencies for the Lambda functions:
 
@@ -136,7 +136,7 @@ pip3 install -r lambda-src/processor/requirements.txt -t lambda-src/processor/
 pip3 install -r lambda-src/api/requirements.txt -t lambda-src/api/
 ```
 
-**Verify:** The placeholder is replaced with your own password, `FIRSTNAME` is replaced with your first name, and the dependencies were installed.
+**Verify:** The placeholder is replaced with your own password, `VORNAME` is replaced with your first name, and the dependencies were installed.
 
 ---
 
@@ -189,7 +189,7 @@ Yesterday you already built S3 resources. Today you go one step further: version
 
 | # | What                                                           | Why |
 |---|---------------------------------------------------------------|-----|
-| 1 | S3 bucket named `{project}-{environment}-claims-{FIRSTNAME}` | Unique name in the global S3 namespace |
+| 1 | S3 bucket named `{project}-{environment}-claims-{VORNAME}` | Unique name in the global S3 namespace |
 | 2 | Enable versioning                                             | Documents must not be lost |
 | 3 | Encryption with AES256                                        | Encrypt data at rest (GDPR) |
 | 4 | Public access block (all 4 flags = true)                      | Bucket must never be publicly accessible |
@@ -213,7 +213,7 @@ terraform plan -target=module.storage
 <details>
 <summary>Hint – Resource 1: S3 bucket</summary>
 
-`aws_s3_bucket` needs a `bucket` argument for the name. Bucket names must be globally unique — build it from the variables available to you: `var.project`, `var.environment`, and `var.suffix`. Terraform string interpolation works like this: `"${var.project}-additional-text"`. Also set `tags = var.tags`.
+`aws_s3_bucket` needs a `bucket` argument for the name. Bucket names must be globally unique — build it from the variables available to you: `var.project` and `var.environment`. Terraform string interpolation works like this: `"${var.project}-additional-text"`. Also set `tags = var.tags`.
 
 Look in `variables.tf` for which variables the module receives — you don't need to hard-code anything.
 
@@ -358,7 +358,7 @@ Then reference the ID like this: `data.aws_security_group.rds.id`
 <summary>Hint – Resource 3: RDS instance</summary>
 
 `aws_db_instance` has many arguments — these are the important ones for the workshop:
-- `identifier` — unique name of the instance (pattern: `{project}-{environment}-claims-FIRSTNAME`)
+- `identifier` — unique name of the instance (pattern: `{project}-{environment}-claims-VORNAME`)
 - `engine = "postgres"`, `engine_version = "16.6"`
 - `instance_class = "db.t3.micro"`, `allocated_storage = 20`
 - `storage_encrypted = true`
@@ -402,7 +402,7 @@ This takes about 8–10 minutes. Use the time for the discussion points below.
 
 ```bash
 aws rds describe-db-instances \
-  --db-instance-identifier devk-dev-claims-FIRSTNAME \
+  --db-instance-identifier devk-dev-claims-VORNAME \
   --query "DBInstances[0].DBInstanceStatus" \
   --output text \
   --region eu-central-1
@@ -690,7 +690,7 @@ aws logs tail $(terraform output -raw processor_log_group) --follow --region eu-
 > **Important:** Please clean up at the end of the workshop — otherwise RDS will incur ongoing costs.
 
 The S3 bucket must be empty before it can be deleted.
-To do this, go to the [AWS Console](https://856021348966.signin.aws.amazon.com/console), either under "Recently visited" or under "All services" in "S3", select your bucket (devk-dev-claims-FIRSTNAME), click "Empty", and confirm. Afterwards you can clean up all resources with `terraform destroy`.
+To do this, go to the [AWS Console](https://856021348966.signin.aws.amazon.com/console), either under "Recently visited" or under "All services" in "S3", select your bucket (devk-dev-claims-VORNAME), click "Empty", and confirm. Afterwards you can clean up all resources with `terraform destroy`.
 
 ```bash
 # S3 bucket must be empty, otherwise destroy will fail

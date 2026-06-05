@@ -24,6 +24,11 @@ resource "aws_s3_object" "jasper-workshop-static-page-index" {
 resource "aws_s3_bucket_public_access_block" "jasper-workshop-static-page-public-access-block" {
   bucket   = aws_s3_bucket.jasper-workshop-static-page.id
   provider = aws.frankfurt
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
 resource "aws_s3_bucket_policy" "jasper-workshop-static-page-policy" {
