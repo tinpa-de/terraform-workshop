@@ -359,7 +359,7 @@ Referenziert die ID dann so: `data.aws_security_group.rds.id`
 
 `aws_db_instance` hat viele Argumente — für den Workshop sind diese wichtig:
 - `identifier` — eindeutiger Name der Instanz (Muster: `{project}-{environment}-claims-VORNAME`)
-- `engine = "postgres"`, `engine_version = "16.6"`
+- `engine = "postgres"`, `engine_version = "16.10"`
 - `instance_class = "db.t3.micro"`, `allocated_storage = 20`
 - `storage_encrypted = true`
 - `db_name`, `username`, `password` — aus den Variablen
