@@ -4,7 +4,7 @@ Today you build the backend of a feedback portal by hand, in the AWS Management 
 
 By the end of today you will have:
 - Created an S3 bucket with versioning and encryption in the console
-- Deployed a Python Lambda function and wired it to an existing IAM role
+- Deployed a Python Lambda function, let AWS create its IAM role, and extended that role yourself
 - Put an HTTP API in front of that function with three routes
 - Called your own API from the terminal and watched the logs
 - Queried all of it again from the AWS CLI
@@ -54,7 +54,7 @@ Someone submits feedback over HTTP, it lands in S3 as a JSON file, and can be re
 | **Lambda** | Runs your code on demand. You upload a function, AWS runs it when something calls it. | Services → Compute → Lambda |
 | **API Gateway** | Turns HTTP requests into invocations of something else - here, your Lambda. | Services → Networking → API Gateway |
 | **CloudWatch Logs** | Everything your function prints ends up here. | Services → Management → CloudWatch |
-| **IAM** | Who is allowed to do what. Today you only *use* a role, you do not create one. | Services → Security → IAM |
+| **IAM** | Who is allowed to do what. Lambda creates a role for your function; you add the S3 permissions to it by hand. | Services → Security → IAM |
 
 ---
 
@@ -208,22 +208,87 @@ The second command must print `{ "Status": "Enabled" }`. Empty output means vers
 1. Console → **Lambda** → **Create function**.
 2. **Author from scratch**.
 3. **Function name:** `nl-dev-feedback-api-manual-VORNAME`.
-4. **Runtime:** `Python 3.13`.
-5. Open **Change default execution role**, choose **Use an existing role**, and pick **`nl-dev-feedback-api-role`** from the dropdown.
+4. **Runtime:** `Python 3.14`.
+5. Open **Change default execution role** and leave it on **Create a new role with basic Lambda permissions**. AWS then creates a role called `nl-dev-feedback-api-manual-VORNAME-role-<random>` and attaches it to the function.
 6. **Create function**.
 
-> **Important:** step 5 is easy to miss. The default is *Create a new role with basic Lambda permissions*, which produces a function that may write logs but cannot touch S3. If you took the default, go to **Configuration → Permissions → Edit** and switch the role.
-
 <details>
-<summary>Hint - why we are not creating the role ourselves</summary>
+<summary>Hint - why the function needs a role at all</summary>
 
-A Lambda function does not act as you. It assumes an IAM role, and that role's policy decides what the code may do. Ours grants two things: writing logs, and reading/writing objects in any bucket named `nl-dev-feedback-*`.
+A Lambda function does not act as you. It assumes an IAM role, and that role's policy decides what the code may do.
 
-The role was created before the workshop so that everyone shares one and nobody has to hand-write a trust policy. You will meet it again tomorrow as a `data "aws_iam_role"` lookup.
+The role AWS just created for you grants exactly one thing: writing to CloudWatch Logs. That is the minimum any function needs, and nothing more - it cannot touch S3 yet. Your code calls `PutObject`, `GetObject` and `ListObjectsV2`, so in the next step you add those permissions yourself.
+
+Tomorrow Terraform uses a single shared role that the facilitator created once, looked up with `data "aws_iam_role"`. Same two halves - a trust policy saying *who* may assume the role, and a permission policy saying *what* they may then do.
 
 </details>
 
-### 2.2 - Paste the code
+### 2.2 - Give the role access to your bucket
+
+The function can write logs, but not files. You fix that on the role, not on the function.
+
+1. On the function page: **Configuration → Permissions**.
+2. Under **Execution role**, click the **Role name** link - it opens the role in the IAM console in a new tab.
+3. **Add permissions → Create inline policy**.
+4. Switch the editor from **Visual** to **JSON** and replace everything with this - both `VORNAME` placeholders are your bucket name:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadWriteFeedbackObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::nl-dev-feedback-manual-VORNAME/*"
+    },
+    {
+      "Sid": "ListFeedbackBucket",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::nl-dev-feedback-manual-VORNAME"
+    }
+  ]
+}
+```
+
+5. **Next**, **Policy name:** `feedback-bucket-access`, then **Create policy**.
+
+<details>
+<summary>Hint - why two statements with two different ARNs</summary>
+
+S3 has two kinds of permission and they take different resources.
+
+- Actions on *objects* (`GetObject`, `PutObject`) need the object ARN: `arn:aws:s3:::bucket/*`. The `/*` is the part that matters.
+- Actions on the *bucket* (`ListBucket`, which is what `list_objects_v2` calls) need the bucket ARN itself, with no `/*`.
+
+Give only the first statement and `POST /feedback` works while `GET /feedback` returns an `AccessDenied`. That mismatch is one of the most common IAM bugs in AWS, and the error message never says "you used the wrong ARN shape".
+
+</details>
+
+**Verify:**
+
+```bash
+aws lambda get-function-configuration \
+  --function-name nl-dev-feedback-api-manual-VORNAME \
+  --query Role --output text
+```
+
+Take the role name from the end of that ARN and list what is attached to it:
+
+```bash
+aws iam list-role-policies --role-name PASTE-ROLE-NAME-HERE
+aws iam list-attached-role-policies --role-name PASTE-ROLE-NAME-HERE
+```
+
+The first must list `feedback-bucket-access`, the second the AWS-managed basic execution policy. Missing the inline policy means the save did not go through.
+
+> IAM changes are eventually consistent. If a call still fails with `AccessDenied` right after you saved the policy, wait a few seconds and try again before you start debugging.
+
+### 2.3 - Paste the code
 
 1. On the **Code** tab, the editor shows a file called `lambda_function.py` with a stub in it.
 2. Open [lambda-src/handler.py](lambda-src/handler.py) from this repository, copy **everything**, and replace the entire contents of `lambda_function.py`.
@@ -231,7 +296,7 @@ The role was created before the workshop so that everyone shares one and nobody 
 
 > Leave the **Handler** setting at `lambda_function.lambda_handler`. The file in the console is called `lambda_function.py` and our code defines a function called `lambda_handler`, so the default already points at the right place. Tomorrow the file is called `handler.py`, and the handler will read `handler.lambda_handler` - same two halves, `<file>.<function>`.
 
-### 2.3 - Configure it
+### 2.4 - Configure it
 
 1. **Configuration → Environment variables → Edit → Add environment variable**
    - Key: `BUCKET_NAME`
@@ -244,7 +309,7 @@ The role was created before the workshop so that everyone shares one and nobody 
 
 > The code reads the bucket name from the environment instead of hardcoding it. That is the only reason the exact same file can run against today's bucket and tomorrow's.
 
-### 2.4 - Test it
+### 2.5 - Test it
 
 1. Go to the **Test** tab, choose **Create new event**, name it `post-feedback`.
 2. Replace the event JSON with:
@@ -270,8 +335,9 @@ You should get a green box with `"statusCode": 201` and a body containing a gene
 
 Read the error text in the result panel, not just the red banner.
 
-- `KeyError: 'BUCKET_NAME'` - the environment variable is missing or misspelled. Step 2.3.
-- `AccessDenied` on `PutObject` - the function is using the wrong execution role. Step 2.1, point 5.
+- `KeyError: 'BUCKET_NAME'` - the environment variable is missing or misspelled. Step 2.4.
+- `AccessDenied` on `PutObject` - the inline policy is missing, names the wrong bucket, or lacks the `/*` on the object ARN. Step 2.2.
+- `AccessDenied` on `ListObjects` - the second statement, the one on the bare bucket ARN, is missing. Step 2.2.
 - `NoSuchBucket` - the bucket name in the environment variable does not match the bucket you created.
 - `Unable to import module 'lambda_function'` - the paste went wrong, or you renamed the file. Check the Code tab.
 
@@ -403,9 +469,14 @@ aws lambda list-functions \
   --query 'Functions[?contains(FunctionName, `VORNAME`)].[FunctionName,Runtime,Timeout,MemorySize]' \
   --output table
 
-# Its configuration in full, including the environment variables
+# Its configuration in full, including the environment variables and its role
 aws lambda get-function-configuration \
   --function-name nl-dev-feedback-api-manual-VORNAME
+
+# The policy you wrote by hand, read back out of IAM
+aws iam get-role-policy \
+  --role-name PASTE-ROLE-NAME-HERE \
+  --policy-name feedback-bucket-access
 ```
 
 ```bash
@@ -433,8 +504,9 @@ At the end of Day 2, come back here and delete them in this order. Note that not
 
 1. **API Gateway** → select `nl-dev-feedback-manual-VORNAME` → **Actions → Delete**.
 2. **Lambda** → select `nl-dev-feedback-api-manual-VORNAME` → **Actions → Delete**.
-3. **CloudWatch → Log groups** → delete `/aws/lambda/nl-dev-feedback-api-manual-VORNAME`. Deleting a function does not delete its logs.
-4. **S3** → select your bucket → **Empty**, type the confirmation, then **Delete**.
+3. **IAM → Roles** → search `nl-dev-feedback-api-manual-VORNAME` → select the role Lambda created for you → **Delete**. Deleting a function leaves its role behind, inline policy and all.
+4. **CloudWatch → Log groups** → delete `/aws/lambda/nl-dev-feedback-api-manual-VORNAME`. Deleting a function does not delete its logs.
+5. **S3** → select your bucket → **Empty**, type the confirmation, then **Delete**.
 
 > A versioned bucket is not empty until its object *versions* and delete markers are gone too. The console's **Empty** action handles that. From the CLI, `aws s3 rm --recursive` does not - it leaves the old versions behind and the delete then fails.
 
@@ -444,6 +516,7 @@ At the end of Day 2, come back here and delete them in this order. Note that not
 aws s3 ls | grep VORNAME
 aws lambda list-functions --query 'Functions[?contains(FunctionName, `VORNAME`)].FunctionName'
 aws apigatewayv2 get-apis --query 'Items[?contains(Name, `VORNAME`)].Name'
+aws iam list-roles --query 'Roles[?contains(RoleName, `VORNAME`)].RoleName'
 ```
 
-All three must come back empty.
+All four must come back empty.
