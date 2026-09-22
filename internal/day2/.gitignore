@@ -1,0 +1,23 @@
+# Terraform state - contains every attribute of every resource, including
+# values marked sensitive. Never commit it.
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+
+# Your personal input values.
+*.tfvars
+!*.tfvars.example
+
+# Build artefacts produced by data "archive_file".
+build/
+*.zip
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Scratch output from `aws lambda invoke`.
+response.json

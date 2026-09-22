@@ -1,0 +1,4 @@
+# Copy this file to terraform.tfvars and set your own name suffix.
+# terraform.tfvars is gitignored and is never committed.
+
+name_suffix = "vorname"
